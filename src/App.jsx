@@ -1,122 +1,105 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import { Calendar, LayoutGrid, CheckSquare } from 'lucide-react';
+import MonthView from './components/MonthView';
+import WeekView from './components/WeekView';
+import Checklist from './components/Checklist';
+import EventModal from './components/EventModal';
+import { useEvents } from './hooks/useEvents';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const TABS = [
+  { id: 'mensal', label: 'Mensal', Icon: Calendar },
+  { id: 'semanal', label: 'Semanal', Icon: LayoutGrid },
+  { id: 'checklist', label: 'Checklist', Icon: CheckSquare },
+];
+
+export default function App() {
+  const [tab, setTab] = useState('mensal');
+  const [modal, setModal] = useState({ open: false, defaultDate: '', defaultTime: '', editEvent: null });
+
+  const { events, tasks, addEvent, updateEvent, deleteEvent, addTask, toggleTask, deleteTask } = useEvents();
+
+  const openNew = (date = '', time = '') => {
+    setModal({ open: true, defaultDate: date, defaultTime: time, editEvent: null });
+  };
+
+  const openEdit = (event) => {
+    setModal({ open: true, defaultDate: '', defaultTime: '', editEvent: event });
+  };
+
+  const closeModal = () => {
+    setModal({ open: false, defaultDate: '', defaultTime: '', editEvent: null });
+  };
+
+  const handleSave = (formData) => {
+    if (modal.editEvent) {
+      updateEvent(modal.editEvent.id, formData);
+    } else {
+      addEvent(formData);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      <header className="app-header">
+        <div className="header-inner">
+          <div className="brand">
+            <span className="brand-icon">📅</span>
+            <h1 className="brand-name">Minha Agenda</h1>
+          </div>
+          <button className="btn btn-primary new-event-btn" onClick={() => openNew()}>
+            + Novo Evento
+          </button>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      <nav className="tab-bar">
+        {TABS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            className={`tab-btn ${tab === id ? 'active' : ''}`}
+            onClick={() => setTab(id)}
+          >
+            <Icon size={18} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <main className="app-main">
+        {tab === 'mensal' && (
+          <MonthView
+            events={events}
+            onDayClick={(date) => openNew(date)}
+            onEventClick={openEdit}
+          />
+        )}
+        {tab === 'semanal' && (
+          <WeekView
+            events={events}
+            onSlotClick={(date, time) => openNew(date, time)}
+            onEventClick={openEdit}
+          />
+        )}
+        {tab === 'checklist' && (
+          <Checklist
+            tasks={tasks}
+            onAddTask={addTask}
+            onToggleTask={toggleTask}
+            onDeleteTask={deleteTask}
+          />
+        )}
+      </main>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <EventModal
+        isOpen={modal.open}
+        onClose={closeModal}
+        onSave={handleSave}
+        onDelete={deleteEvent}
+        editEvent={modal.editEvent}
+        defaultDate={modal.defaultDate}
+        defaultTime={modal.defaultTime}
+      />
+    </div>
+  );
 }
-
-export default App

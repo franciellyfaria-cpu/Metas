@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
 
-const EVENTS_KEY = 'agenda_events';
-const TASKS_KEY = 'agenda_tasks';
+const STORAGE_KEY = 'minha-agenda-events';
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
 
 export function useEvents() {
   const [events, setEvents] = useState(() => {
     try {
-      const stored = localStorage.getItem(EVENTS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [tasks, setTasks] = useState(() => {
-    try {
-      const stored = localStorage.getItem(TASKS_KEY);
+      const stored = localStorage.getItem(STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -23,79 +17,46 @@ export function useEvents() {
   });
 
   useEffect(() => {
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    } catch {
+      // ignore storage errors
+    }
   }, [events]);
 
-  useEffect(() => {
-    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
-  }, [tasks]);
-
-  const addEvent = (event) => {
+  function addEvent(eventData) {
     const newEvent = {
-      ...event,
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
-      createdAt: new Date().toISOString(),
-    };
-    setEvents((prev) => [...prev, newEvent]);
-    return newEvent;
-  };
-
-  const updateEvent = (id, updates) => {
-    setEvents((prev) =>
-      prev.map((ev) => (ev.id === id ? { ...ev, ...updates } : ev))
-    );
-  };
-
-  const deleteEvent = (id) => {
-    setEvents((prev) => prev.filter((ev) => ev.id !== id));
-  };
-
-  const getEventsForDate = (dateStr) => {
-    return events.filter((ev) => ev.date === dateStr);
-  };
-
-  const getEventsForWeek = (startDateStr, endDateStr) => {
-    return events.filter((ev) => ev.date >= startDateStr && ev.date <= endDateStr);
-  };
-
-  const addTask = (task) => {
-    const newTask = {
-      ...task,
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
+      id: generateId(),
+      title: eventData.title || '',
+      date: eventData.date || new Date().toISOString().split('T')[0],
+      time: eventData.time || '',
+      type: eventData.type || 'event',
+      category: eventData.category || 'Outros',
       completed: false,
-      createdAt: new Date().toISOString(),
+      color: eventData.color || '#6c3de0',
+      description: eventData.description || '',
     };
-    setTasks((prev) => [...prev, newTask]);
-    return newTask;
-  };
+    setEvents(prev => [...prev, newEvent]);
+    return newEvent;
+  }
 
-  const updateTask = (id, updates) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+  function updateEvent(id, updates) {
+    setEvents(prev =>
+      prev.map(ev => (ev.id === id ? { ...ev, ...updates } : ev))
     );
-  };
+  }
 
-  const deleteTask = (id) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  };
+  function deleteEvent(id) {
+    setEvents(prev => prev.filter(ev => ev.id !== id));
+  }
 
-  const toggleTask = (id) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+  function toggleTask(id) {
+    setEvents(prev =>
+      prev.map(ev =>
+        ev.id === id ? { ...ev, completed: !ev.completed } : ev
+      )
     );
-  };
+  }
 
-  return {
-    events,
-    tasks,
-    addEvent,
-    updateEvent,
-    deleteEvent,
-    getEventsForDate,
-    getEventsForWeek,
-    addTask,
-    updateTask,
-    deleteTask,
-    toggleTask,
-  };
+  return { events, addEvent, updateEvent, deleteEvent, toggleTask };
 }
