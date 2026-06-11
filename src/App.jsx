@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, LayoutGrid, CheckSquare } from 'lucide-react';
+import { CalendarDays, CalendarRange, CheckSquare } from 'lucide-react';
 import MonthView from './components/MonthView';
 import WeekView from './components/WeekView';
 import Checklist from './components/Checklist';
@@ -8,73 +8,78 @@ import { useEvents } from './hooks/useEvents';
 import './App.css';
 
 const TABS = [
-  { id: 'mensal', label: 'Mensal', Icon: Calendar },
-  { id: 'semanal', label: 'Semanal', Icon: LayoutGrid },
+  { id: 'month', label: 'Mensal', Icon: CalendarDays },
+  { id: 'week', label: 'Semanal', Icon: CalendarRange },
   { id: 'checklist', label: 'Checklist', Icon: CheckSquare },
 ];
 
+const TODAY = new Date();
+const DAY_NAMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+const MONTH_NAMES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
 export default function App() {
-  const [tab, setTab] = useState('mensal');
+  const [tab, setTab] = useState('month');
   const [modal, setModal] = useState({ open: false, defaultDate: '', defaultTime: '', editEvent: null });
 
-  const { events, tasks, addEvent, updateEvent, deleteEvent, addTask, toggleTask, deleteTask } = useEvents();
+  const { events, addEvent, updateEvent, deleteEvent, toggleTask } = useEvents();
 
-  const openNew = (date = '', time = '') => {
+  function openNew(date = '', time = '') {
     setModal({ open: true, defaultDate: date, defaultTime: time, editEvent: null });
-  };
+  }
 
-  const openEdit = (event) => {
-    setModal({ open: true, defaultDate: '', defaultTime: '', editEvent: event });
-  };
+  function openEdit(event) {
+    setModal({ open: true, defaultDate: event.date, defaultTime: event.time || '', editEvent: event });
+  }
 
-  const closeModal = () => {
+  function closeModal() {
     setModal({ open: false, defaultDate: '', defaultTime: '', editEvent: null });
-  };
+  }
 
-  const handleSave = (formData) => {
+  function handleSave(formData) {
     if (modal.editEvent) {
       updateEvent(modal.editEvent.id, formData);
     } else {
-      addEvent(formData);
+      addEvent({ ...formData, time: formData.time || modal.defaultTime });
     }
-  };
+  }
+
+  function handleAddTask(taskData) {
+    addEvent({ ...taskData, type: 'task' });
+  }
+
+  const subtitle = `${DAY_NAMES[TODAY.getDay()]}, ${TODAY.getDate()} de ${MONTH_NAMES[TODAY.getMonth()]}`;
 
   return (
     <div className="app">
       <header className="app-header">
-        <div className="header-inner">
-          <div className="brand">
-            <span className="brand-icon">📅</span>
-            <h1 className="brand-name">Minha Agenda</h1>
-          </div>
-          <button className="btn btn-primary new-event-btn" onClick={() => openNew()}>
-            + Novo Evento
-          </button>
+        <div>
+          <h1>Minha Agenda</h1>
+          <div className="header-subtitle">{subtitle}</div>
         </div>
       </header>
 
-      <nav className="tab-bar">
+      <nav className="tabs">
         {TABS.map(({ id, label, Icon }) => (
           <button
             key={id}
-            className={`tab-btn ${tab === id ? 'active' : ''}`}
+            className={`tab-btn${tab === id ? ' active' : ''}`}
             onClick={() => setTab(id)}
           >
-            <Icon size={18} />
-            <span>{label}</span>
+            <Icon size={16} />
+            {label}
           </button>
         ))}
       </nav>
 
-      <main className="app-main">
-        {tab === 'mensal' && (
+      <main className="app-content">
+        {tab === 'month' && (
           <MonthView
             events={events}
-            onDayClick={(date) => openNew(date)}
+            onDayClick={date => openNew(date)}
             onEventClick={openEdit}
           />
         )}
-        {tab === 'semanal' && (
+        {tab === 'week' && (
           <WeekView
             events={events}
             onSlotClick={(date, time) => openNew(date, time)}
@@ -83,10 +88,10 @@ export default function App() {
         )}
         {tab === 'checklist' && (
           <Checklist
-            tasks={tasks}
-            onAddTask={addTask}
+            events={events}
+            onAddTask={handleAddTask}
             onToggleTask={toggleTask}
-            onDeleteTask={deleteTask}
+            onDeleteTask={deleteEvent}
           />
         )}
       </main>
@@ -98,7 +103,6 @@ export default function App() {
         onDelete={deleteEvent}
         editEvent={modal.editEvent}
         defaultDate={modal.defaultDate}
-        defaultTime={modal.defaultTime}
       />
     </div>
   );
