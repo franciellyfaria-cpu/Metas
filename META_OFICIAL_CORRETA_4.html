@@ -2072,7 +2072,7 @@ function parseSheetMeta(rows, ent) {
   const iVol   = Math.max(hdr.findIndex(v => v.includes('volume')), 7);
 
   const vendedores = [];
-  let metaGeralFat = 0, metaGeralPosit = 0, metaGeralPeso = 0, metaGeralPed = 0;
+  let metaGeralFat = 0, metaGeralPosit = 0, metaGeralPeso = 0;
 
   for(let i = headerRow + 1; i < rows.length; i++) {
     const row = rows[i]; if(!row) continue;
@@ -2092,7 +2092,6 @@ function parseSheetMeta(rows, ent) {
       metaGeralFat   = parseNum(row[iFat]);
       metaGeralPosit = parseNum(row[iPosit]);
       metaGeralPeso  = parseNum(row[iVol]);
-      metaGeralPed   = parseNum(row[iPed]);
       continue;
     }
 
@@ -2105,8 +2104,6 @@ function parseSheetMeta(rows, ent) {
     const fatVal = parseNum(row[iFat]);
     const volVal = parseNum(row[iVol]);
     const positVal = parseNum(row[iPosit]);
-    const pedVal   = parseNum(row[iPed]);
-
     // Normalizar nome do vendedor
     const nomeNorm = nome.includes('(ITA)') ? nome.trim() : nome.trim();
 
@@ -2457,7 +2454,7 @@ function getMetaGeralVendedor(key, nomeVend) {
   const p = S.hist[key];
   if(!p) return {fat:0, posit:0, peso:0};  // ✅ PROTEÇÃO
   
-  let fat=0, posit=0, peso=0=0;
+  let fat=0, posit=0, peso=0;
   ENT.forEach(e => {
     const m = p.metas?.[e]; if(!m) return;  // ✅ PROTEÇÃO com optional chaining
     const v = m.vendedores?.find(x=>x.nome===nomeVend);
@@ -6368,15 +6365,6 @@ async function renderGCoordDistribuicao() {
           <div style="font-size:10px;color:var(--text3);margin-top:5px">Distribuído: <span id="gMetaPosDist" style="font-weight:700;color:var(--green)">—</span></div>
           <div style="font-size:10px;margin-top:2px">Falta: <span id="gMetaPosFalta" style="font-weight:700">—</span></div>
         </div>
-        <div style="background:var(--gray-100);border-radius:var(--r8);padding:10px 14px;border:1.5px solid var(--border)">
-          <div style="font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📦 Pedidos</div>
-          <input id="gMetaPed" type="number" placeholder="0"
-            style="width:100%;border:1.5px solid var(--border);border-radius:var(--r6);padding:6px 8px;font-size:15px;font-weight:800;color:var(--text);background:var(--white);font-family:'Inter',sans-serif;text-align:right"
-            oninput="_gAtualizarTotais('${coords.map(c=>c.id).join(',')}')"
-            onchange="salvarMetaGeralCoordenador('${periodo}')">
-          <div style="font-size:10px;color:var(--text3);margin-top:5px">Distribuído: <span id="gMetaPedDist" style="font-weight:700;color:var(--text)">—</span></div>
-          <div style="font-size:10px;margin-top:2px">Falta: <span id="gMetaPedFalta" style="font-weight:700">—</span></div>
-        </div>
       </div>
     </div>`;
 
@@ -6487,7 +6475,6 @@ async function renderGCoordDistribuicao() {
                 <td style="padding:6px 8px;background:var(--amber-10);border-left:1px solid #fde68a;text-align:right;font-size:12px;font-weight:800;color:var(--amber)" id="gfootVol">—</td>
                 <td style="padding:6px 8px;background:#f0fdf4;border-left:1px solid #86efac;text-align:right;font-size:12px;font-weight:800;color:var(--green)" id="gfootPos">—</td>
                 <td style="padding:6px 8px;background:#f0fdf4;text-align:right;font-size:11px;font-weight:700;color:#374151">${fmtN(teamMediaPos)}</td>
-                <td style="padding:6px 8px;border-left:1px solid var(--border);text-align:right;font-size:12px;font-weight:800;color:var(--text)" id="gfootPed">—</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -6519,8 +6506,6 @@ async function salvarMetaGeralCoordenador(periodo) {
   const fat = parseFloat(document.getElementById('gMetaFat')?.getAttribute('data-raw'))||0;
   const vol = parseFloat(document.getElementById('gMetaVol')?.value)||0;
   const pos = parseFloat(document.getElementById('gMetaPos')?.value)||0;
-  const ped = parseFloat(document.getElementById('gMetaPed')?.value)||0;
-  
   // ✅ Salvar em S.hist para aparecer no Dashboard
   if(S && S.hist) {
     const periodoFormatado = formatPeriodoBR(periodo);
@@ -6544,7 +6529,7 @@ async function salvarMetaGeralCoordenador(periodo) {
       peso: vol,
     };
     
-    console.log(`✅ Meta Geral salva: Fat R$ ${fat} | Vol ${vol}kg | Pos ${pos} | Ped ${ped}`);
+    console.log(`✅ Meta Geral salva: Fat R$ ${fat} | Vol ${vol}kg | Pos ${pos}`);
     save();
   }
   
@@ -6558,10 +6543,9 @@ async function salvarMetaGeralGerente(periodo) {
   const fat = parseFloat(document.getElementById('gMetaFat')?.getAttribute('data-raw'))||0;
   const vol = parseFloat(document.getElementById('gMetaVol')?.value)||0;
   const pos = parseFloat(document.getElementById('gMetaPos')?.value)||0;
-  const ped = parseFloat(document.getElementById('gMetaPed')?.value)||0;
   try {
     const rows = await sbGet('gerentes_metas_geral', `?gerente_id=eq.${CU.id}&periodo=eq.${periodo}`);
-    const row = { gerente_id: CU.id, periodo, meta_faturamento: fat, meta_volume: vol, meta_positivacao: pos atualizado_em: new Date().toISOString() };
+    const row = { gerente_id: CU.id, periodo, meta_faturamento: fat, meta_volume: vol, meta_positivacao: pos, atualizado_em: new Date().toISOString() };
     if (rows && rows.length) {
       await sbPatch('gerentes_metas_geral', `?gerente_id=eq.${CU.id}&periodo=eq.${periodo}`, row);
     } else {
@@ -6604,7 +6588,6 @@ function _gAtualizarTotais(coordIdsStr) {
     sF += elF ? (parseFloat(elF.getAttribute('data-raw'))||parseFloat(elF.value)||0) : 0;
     sV += parseFloat(document.getElementById('gv-'+id)?.value)||0;
     sP += parseFloat(document.getElementById('gp-'+id)?.value)||0;
-    sD += parseFloat(document.getElementById('gd-'+id)?.value)||0;
   });
 
   // Meta geral do gerente
@@ -6612,8 +6595,6 @@ function _gAtualizarTotais(coordIdsStr) {
   const mF = elMetaFat ? (parseFloat(elMetaFat.getAttribute('data-raw'))||parseFloat(elMetaFat.value)||0) : 0;
   const mV = parseFloat(document.getElementById('gMetaVol')?.value)||0;
   const mP = parseFloat(document.getElementById('gMetaPos')?.value)||0;
-  const mD = parseFloat(document.getElementById('gMetaPed')?.value)||0;
-
   // Atualizar "Distribuído" e "Falta" para cada campo
   function setFalta(distId, faltaId, soma, meta, isCurrency) {
     const elDist  = document.getElementById(distId);
@@ -6636,14 +6617,11 @@ function _gAtualizarTotais(coordIdsStr) {
   setFalta('gMetaFatDist','gMetaFatFalta', sF, mF, true);
   setFalta('gMetaVolDist','gMetaVolFalta', sV, mV, false);
   setFalta('gMetaPosDist','gMetaPosFalta', sP, mP, false);
-  setFalta('gMetaPedDist','gMetaPedFalta', sD, mD, false);
-
   // Rodapé da tabela
   const setEl = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
   setEl('gfootFat', fmtR(sF));
   setEl('gfootVol', fmtN(sV));
   setEl('gfootPos', fmtN(sP));
-  setEl('gfootPed', fmtN(sD));
 }
 
 // ── HISTÓRICO ANUAL DO COORDENADOR (modal) ──
@@ -7304,7 +7282,7 @@ async function exportXLSX() {
       const totFat  = vmetas.reduce((s,v)=>s+fmtR(v.meta_faturamento),0);
       const totVol  = vmetas.reduce((s,v)=>s+fmtR(v.meta_volume),0);
       const totPos  = vmetas.reduce((s,v)=>s+fmtR(v.meta_positivacao),0);
-      sheetRows.push(['TOTAL VENDEDORES', totFat, totVol, totPos, totPed]);
+      sheetRows.push(['TOTAL VENDEDORES', totFat, totVol, totPos]);
     } else {
       sheetRows.push(['Nenhum vendedor distribuído', '', '', '', '']);
     }
@@ -8047,9 +8025,6 @@ async function loadMetasRecebidasPage() {
             <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">✅ Positivação</div>
             <div style="font-size:18px;font-weight:800">${fmtN(macroPos)}</div>
           </div>
-          <div style="background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r8);padding:12px 14px">
-            <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📦 Pedidos</div>
-          </div>
         </div>
 
         <!-- ── DISTRIBUIÇÃO POR VENDEDOR ── -->
@@ -8092,7 +8067,6 @@ async function loadMetasRecebidasPage() {
             <div id="val-fat-${m.id}"><span style="color:var(--text3)">Faturamento: calculando...</span></div>
             <div id="val-vol-${m.id}"><span style="color:var(--text3)">Volume: —</span></div>
             <div id="val-pos-${m.id}"><span style="color:var(--text3)">Positivação: —</span></div>
-            <div id="val-ped-${m.id}"><span style="color:var(--text3)">Pedidos: —</span></div>
           </div>
         </div>` : ''}
 
@@ -8114,7 +8088,6 @@ async function loadMetasRecebidasPage() {
     sF += elVF ? (parseFloat(elVF.getAttribute('data-raw'))||parseFloat(elVF.value)||0) : 0;
     sV += parseFloat(document.getElementById(`vv-${metaId}-${vid}`)?.value)||0;
     sP += parseFloat(document.getElementById(`vp-${metaId}-${vid}`)?.value)||0;
-    sD += parseFloat(document.getElementById(`vd-${metaId}-${vid}`)?.value)||0;
   });
   const fmtRi = n => 'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const fmtNi = n => Number(n).toLocaleString('pt-BR');
@@ -8135,7 +8108,6 @@ async function loadMetasRecebidasPage() {
   const elF = document.getElementById(`val-fat-${metaId}`);
   const elV = document.getElementById(`val-vol-${metaId}`);
   const elP = document.getElementById(`val-pos-${metaId}`);
-  const elD = document.getElementById(`val-ped-${metaId}`);
   if(elF) elF.innerHTML = valHtml(sF, macroFat, '💰 Faturamento', fmtRi, 50000);
   if(elV) elV.innerHTML = valHtml(sV, macroVol, '⚖️ Volume', v=>fmtNi(v)+' kg');
   if(elP) elP.innerHTML = valHtml(sP, macroPos, '✅ Positivação', fmtNi);
@@ -8149,7 +8121,6 @@ async function loadMetasRecebidasPage() {
     sF += elVF2 ? (parseFloat(elVF2.getAttribute('data-raw'))||parseFloat(elVF2.value)||0) : 0;
     sV += parseFloat(document.getElementById(`vv-${metaId}-${vid}`)?.value)||0;
     sP += parseFloat(document.getElementById(`vp-${metaId}-${vid}`)?.value)||0;
-    sD += parseFloat(document.getElementById(`vd-${metaId}-${vid}`)?.value)||0;
   });
   const erros = [];
   const TOL = 0.01;
@@ -8169,7 +8140,7 @@ async function loadMetasRecebidasPage() {
     const excesso = sF - macroFat;
     if(!confirm(`⚠️ Atenção: o Faturamento distribuído (R$ ${sF.toLocaleString('pt-BR',{minimumFractionDigits:2})}) está R$ ${excesso.toLocaleString('pt-BR',{minimumFractionDigits:2})} acima do teto recebido.\n\nIsso está dentro do limite permitido de R$ 50.000.\n\nDeseja enviar mesmo assim?`)) return;
   }
-  if(!confirm(`Confirmar envio do planejamento ao gerente?\n\nFaturamento: R$ ${sF.toLocaleString('pt-BR',{minimumFractionDigits:2})}\nVolume: ${sV.toLocaleString('pt-BR')} kg\nPositivação: ${sP}\nPedidos: ${sD}\n\nA tela será bloqueada até a aprovação.`)) return;
+  if(!confirm(`Confirmar envio do planejamento ao gerente?\n\nFaturamento: R$ ${sF.toLocaleString('pt-BR',{minimumFractionDigits:2})}\nVolume: ${sV.toLocaleString('pt-BR')} kg\nPositivação: ${sP}\n\nA tela será bloqueada até a aprovação.`)) return;
 
   // Save all vendor distributions first (UPSERT com estrutura obrigatória)
   // Período canônico para o banco: "Maio-2026"
@@ -8188,7 +8159,6 @@ async function loadMetasRecebidasPage() {
     const fat = elFatV ? (parseFloat(elFatV.getAttribute('data-raw'))||parseFloat(elFatV.value)||0) : 0;
     const vol = parseFloat(document.getElementById(`vv-${metaId}-${vid}`)?.value)||0;
     const pos = parseFloat(document.getElementById(`vp-${metaId}-${vid}`)?.value)||0;
-    const ped = parseFloat(document.getElementById(`vd-${metaId}-${vid}`)?.value)||0;
     const vendObj  = vendsEnvMap[vid] || {};
     const vendNome = vendObj.nome || '';
     const codigo   = extrairCodigoVendedor(vendNome) || String(vendNome).trim() || vid;
@@ -8265,7 +8235,6 @@ async function salvarDistribCoord(metaId, periodo) {
       const fat = elFat ? (parseFloat(elFat.getAttribute('data-raw')) || parseFloat(elFat.value) || 0) : 0;
       const vol = parseFloat(document.getElementById(`vv-${metaId}-${v.id}`)?.value) || 0;
       const pos = parseFloat(document.getElementById(`vp-${metaId}-${v.id}`)?.value) || 0;
-      const ped = parseFloat(document.getElementById(`vd-${metaId}-${v.id}`)?.value) || 0;
       const codigo = extrairCodigoVendedor(v.nome) || String(v.nome || '').trim();
 
       await sbUpsert('metas_vendedores', {
@@ -8421,10 +8390,6 @@ async function renderMetaGeralAcumulada() {
             <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">✅ Positiv.</div>
             <div style="font-size:20px;font-weight:800">${fmtN(totalPos)}</div>
           </div>
-          <div style="background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r8);padding:12px 14px">
-            <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📦 Pedidos</div>
-            <div style="font-size:20px;font-weight:800">${fmtN(totalPed)}</div>
-          </div>
         </div>
         <!-- Tabela por Entreposto -->
         <div class="tw">
@@ -8443,7 +8408,6 @@ async function renderMetaGeralAcumulada() {
               <td style="padding:10px 14px;text-align:right;font-size:13px;color:var(--blue);font-weight:800">${fmtR(totalFat)}</td>
               <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700">${fmtN(totalVol)}</td>
               <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700">${fmtN(totalPos)}</td>
-              <td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700">${fmtN(totalPed)}</td>
               <td></td>
             </tr></tfoot>
           </table>
@@ -8647,7 +8611,6 @@ async function loadGerenteRevisoes() {
                 <td style="padding:9px 10px;text-align:right;border-top:1.5px solid #e2e8f0">${fmt(tot.vol)}</td>
                 <td style="padding:9px 10px;text-align:right;color:#065f46;border-top:1.5px solid #e2e8f0">${fmt(tot.pos)}</td>
                 <td style="padding:9px 10px;text-align:right;color:${colorOk(pctPos)};border-top:1.5px solid #e2e8f0;font-size:11px">${fmt(pctPos,1)}% ${labelOk(pctPos)}</td>
-                <td style="padding:9px 10px;text-align:right;border-top:1.5px solid #e2e8f0">${fmt(tot.ped)}</td>
               </tr>
             </tfoot>
           </table>
@@ -8713,7 +8676,7 @@ async function preencherMetasDoGerente(metaId, periodo) {
   if(!S.hist[key]) S.hist[key] = { metas:{}, realizado:{}, metaGeral:{fat:0,posit:0,peso:0}, obsCoord:{} };
   if(!S.hist[key].metas) S.hist[key].metas = {};
 
-  let totalFat = 0, totalVol = 0, totalPos = 0, totalPed = 0;
+  let totalFat = 0, totalVol = 0, totalPos = 0;
 
   todasMetas.forEach(m => {
     const ent = m.entreposto || 'GERAL';
@@ -8737,7 +8700,7 @@ async function preencherMetasDoGerente(metaId, periodo) {
   if(todasMetas.length > 0) {
     S.hist[key].metas['GERAL'] = {
       vendedores: S.hist[key].metas['GERAL']?.vendedores || [],
-      metaFat: totalFat, metaPed: totalPed,
+      metaFat: totalFat,
       metaPos: totalPos, metaKg:  totalVol
     };
   }
@@ -8815,7 +8778,7 @@ async function salvarEEnviarGerente() {
     const fat = Number(v.meta_fat) || 0;
     const pos = Number(v.meta_posit) || 0;
     const peso = Number(v.meta_peso) || 0;
-    if(fat === 0 && pos === 0 && peso === 0 && ped === 0) continue;
+    if(fat === 0 && pos === 0 && peso === 0) continue;
 
     // Try to find matching cadastrated vendor
     const nomeNorm = fnNorm(v.nome);
