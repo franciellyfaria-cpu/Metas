@@ -1366,12 +1366,12 @@ async function recuperarMetasExistentes() {
   console.log('🔍 Recuperando metas do Supabase...');
   
   try {
-    // Buscar TODAS as metas finalizadas deste coordenador
-    const metas = await sbGet('metas_coordenadores', 
-      `?coordenador_id=eq.${CU.id}&status=eq.finalizada&select=*`) || [];
-    
+    // Buscar metas deste coordenador em qualquer status ativo (não rascunho)
+    const metas = await sbGet('metas_coordenadores',
+      `?coordenador_id=eq.${CU.id}&status=neq.rascunho&select=*`) || [];
+
     if(metas.length === 0) {
-      console.log('ℹ️ Nenhuma meta finalizada encontrada');
+      console.log('ℹ️ Nenhuma meta encontrada');
       return;
     }
     
@@ -1410,16 +1410,32 @@ async function recuperarMetasExistentes() {
       if(!S.hist[periodo]) {
         S.hist[periodo] = { metas:{}, realizado:{}, metaGeral:{fat:0,posit:0,peso:0} };
       }
-      // ✅ Copiar dados das metas
-      S.hist[periodo].metas = { ...porPeriodo[periodo].metas };
+      // ✅ Mesclar metas: atualiza totais do entreposto mas PRESERVA vendedores já distribuídos localmente
+      const metasOrigens = porPeriodo[periodo].metas;
+      Object.keys(metasOrigens).forEach(ent => {
+        const src = metasOrigens[ent];
+        const dst = S.hist[periodo].metas[ent] || {};
+        S.hist[periodo].metas[ent] = {
+          ...dst,          // preserva vendedores e outros campos locais
+          fat    : src.fat,
+          posit  : src.posit,
+          peso   : src.peso,
+          pedidos: src.pedidos,
+          status : src.status,
+          // só sobrescreve vendedores se o src tiver lista não-vazia (ex: vindo do DB)
+          vendedores: (src.vendedores && src.vendedores.length) ? src.vendedores : (dst.vendedores || []),
+        };
+      });
       S.hist[periodo].metaGeral = { ...porPeriodo[periodo].metaGeral };
       S.hist[periodo].metaFechada = true;
       console.log(`✅ Marcado "${periodo}" com dados de meta`);
     });
-    
+
     save();
+    // Atualizar selects para que o período novo apareça no msDash
+    if(typeof fillSelectors === 'function') fillSelectors();
     console.log('✅ Metas com dados recuperadas e salvas!');
-    
+
     // ✅ Renderizar histórico se aba estiver aberta
     if(document.getElementById('page-historico')?.classList.contains('active')) {
       await renderHistorico().catch(e => console.warn('[recuperarMetasExistentes] renderHistorico error:', e));
@@ -4356,6 +4372,14 @@ async function renderDashboard() {
     nomesComMeta.forEach(nome => {
       if(!vendedores.includes(nome)) vendedores.push(nome);
     });
+
+    // Se há meta geral definida mas nenhum vendedor apareceu → mostrar todos os cadastrados
+    // (meta distribuída ainda não; aparecem em Faixa 1 aguardando distribuição)
+    if(vendedores.length === 0 && (p.metaGeral?.fat > 0 || p.metaGeral?.posit > 0 || p.metaGeral?.peso > 0)) {
+      vendedores = cadastrados
+        .map(v => v.nome)
+        .sort((a,b) => nomeExibir(a).localeCompare(nomeExibir(b),'pt-BR',{sensitivity:'base'}));
+    }
   } catch(e) {
     console.warn('[renderDashboard] erro ao filtrar vendedores:', e);
     vendedores = [];
