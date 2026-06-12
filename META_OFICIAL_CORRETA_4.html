@@ -468,7 +468,7 @@ header::before {
 .sidebar nav button[onclick*="metas-gerente"]   .nav-icon::before{content:'\ed05'}   /* target */
 .sidebar nav button[onclick*="goPage('metas')"] .nav-icon::before{content:'\ed05'}   /* target */
 .sidebar nav button[onclick*="gerente-revisoes"] .nav-icon::before{content:'\ea59'}  /* eye/check */
-.sidebar nav button[onclick*="gerente-export"]  .nav-icon::before{content:'\eaf3'}   /* download */
+.sidebar nav button[onclick*="admin-export"]    .nav-icon::before{content:'\eaf3'}   /* download */
 
 /* ADMIN — ícones outline */
 .sidebar nav button[onclick*="admin-overview"]  .nav-icon::before{content:'\eb78'}   /* home */
@@ -568,8 +568,8 @@ body{padding-top:56px!important}
 .cc-meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
 .cc-mf label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
 .lock-banner-v6{background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#b45309;margin-bottom:12px;font-weight:500}
-#page-admin-overview, #page-admin-users, #page-gerente-metas, #page-gerente-revisoes, #page-gerente-export{display:none;padding:22px 26px}
-#page-admin-overview.active, #page-admin-users.active, #page-gerente-metas.active, #page-gerente-revisoes.active, #page-gerente-export.active{display:block}
+#page-admin-overview, #page-admin-users, #page-admin-dashboard, #page-admin-export, #page-gerente-metas, #page-gerente-revisoes{display:none;padding:22px 26px}
+#page-admin-overview.active, #page-admin-users.active, #page-admin-dashboard.active, #page-admin-export.active, #page-gerente-metas.active, #page-gerente-revisoes.active{display:block}
 </style>
 
 
@@ -686,7 +686,6 @@ body{padding-top:56px!important}
           onfocus="fatInputFocus(this)">
       </div>
       <div class="mg-field">
-        <label class="lbl-full">📦 Meta Pedidos Mês Atual (un)</label>
         <input type="number" id="mgPedidos" step="1" oninput="atualizarMetaGeral()"
           style="padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r8);font-size:15px;font-weight:700;color:var(--blue);width:100%;text-align:right;font-family:'Inter',sans-serif">
       </div>
@@ -1057,6 +1056,43 @@ body{padding-top:56px!important}
     </div>
   </div>
 
+  <!-- ADMIN: DASHBOARD -->
+  <div class="page" id="page-admin-dashboard" style="padding:22px 26px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div><h2>Dashboard Admin</h2><p class="sub" style="margin:0">Visão consolidada de distribuição de metas por gerente, coordenador e vendedor</p></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="font-size:12px;color:#64748b;font-weight:600">Período:</label>
+        <input type="month" id="adminDashPeriodo" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif" onchange="loadAdminDashboard()">
+        <button class="btn btn-sm" onclick="loadAdminDashboard()">↺ Atualizar</button>
+      </div>
+    </div>
+    <div id="adminDashContent">
+      <div style="text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:32px;margin-bottom:8px">📊</div><div style="font-size:14px">Selecione um período para visualizar</div></div>
+    </div>
+  </div>
+
+  <!-- ADMIN: EXPORTAR XLSX -->
+  <div class="page" id="page-admin-export" style="padding:22px 26px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div><h2>Exportar XLSX</h2><p class="sub" style="margin:0">Gera planilha com todas as metas finalizadas — um vendedor por linha, uma aba por coordenador</p></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="font-size:12px;color:#64748b;font-weight:600">Período:</label>
+        <input type="month" id="adminExportPeriodo" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif" onchange="loadAdminExport()">
+        <button class="btn btn-sm" onclick="loadAdminExport()">↺ Atualizar</button>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-header"><div class="section-card-title">📋 Preview — Metas por Coordenador</div></div>
+      <div class="section-card-body">
+        <div id="adminExportPreview"><div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">Selecione um período acima</div></div>
+        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-p" id="btnAdminXLSX" onclick="adminGerarXLSX()" style="display:none">⬇️ Baixar XLSX</button>
+          <span id="adminExportInfo" style="font-size:11px;color:#64748b"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <!-- ══ BANNER: METAS DO GERENTE ══ -->
 <div id="metasGerenteBanner" style="margin-bottom:16px;display:none">
   <div style="background:linear-gradient(135deg,#e8f0fb,#f4f7fd);border:1px solid #ccdaf5;border-radius:12px;padding:14px 18px">
@@ -1121,20 +1157,6 @@ body{padding-top:56px!important}
     </div>
   </div>
 
-  <!-- GERENTE: EXPORTAR -->
-  <div class="page" id="page-gerente-export" style="padding:22px 26px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
-      <div><h2>Exportar Relatório</h2><p class="sub">Metas finalizadas — cada coordenador em uma aba separada, com seus vendedores</p></div>
-      <button class="btn btn-sm" onclick="loadGerenteExport()">↺ Atualizar</button>
-    </div>
-    <div class="section-card"><div class="section-card-header"><div class="section-card-title">📄 Metas Finalizadas por Coordenador</div></div>
-      <div class="section-card-body"><div id="gExportTable"></div>
-        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-p" id="btnExportXLSX" onclick="this.disabled=true;this.textContent='⏳ Gerando...';exportXLSX().then(()=>{this.disabled=false;this.textContent='⬇️ Exportar XLSX (por Coordenador)'}).catch(e=>{this.disabled=false;this.textContent='⬇️ Exportar XLSX (por Coordenador)';alert('Erro ao exportar: '+e.message)})">⬇️ Exportar XLSX (por Coordenador)</button>
-          <button class="btn btn-sm" onclick="exportCSV()">⬇️ CSV Resumo</button>
-          <span style="font-size:11px;color:var(--text2)">O XLSX gera uma aba por coordenador + aba Resumo Geral</span>
-        </div></div></div>
-  </div>
 </div>
 
 <!-- ══ MODALS ══ -->
@@ -1384,7 +1406,7 @@ async function recuperarMetasExistentes() {
       if(!porPeriodo[periodo]) {
         porPeriodo[periodo] = { 
           metas: {}, 
-          metaGeral: { fat: 0, posit: 0, peso: 0, pedidos: 0 } 
+          metaGeral: { fat: 0, posit: 0, peso: 0 } 
         };
       }
       
@@ -1394,7 +1416,6 @@ async function recuperarMetasExistentes() {
         fat: m.meta_faturamento || 0,
         posit: m.meta_positivacao || 0,
         peso: m.meta_volume || 0,
-        pedidos: m.meta_pedido || 0,
         status: 'finalizada'
       };
       
@@ -1402,7 +1423,6 @@ async function recuperarMetasExistentes() {
       porPeriodo[periodo].metaGeral.fat += m.meta_faturamento || 0;
       porPeriodo[periodo].metaGeral.posit += m.meta_positivacao || 0;
       porPeriodo[periodo].metaGeral.peso += m.meta_volume || 0;
-      porPeriodo[periodo].metaGeral.pedidos += m.meta_pedido || 0;
     });
     
     // Marcar cada período com dados
@@ -1420,7 +1440,6 @@ async function recuperarMetasExistentes() {
           fat    : src.fat,
           posit  : src.posit,
           peso   : src.peso,
-          pedidos: src.pedidos,
           status : src.status,
           // só sobrescreve vendedores se o src tiver lista não-vazia (ex: vindo do DB)
           vendedores: (src.vendedores && src.vendedores.length) ? src.vendedores : (dst.vendedores || []),
@@ -1455,7 +1474,7 @@ function saveMetasComHistorico(key) {
       S.hist[periodoFormatado] = {
         metas: { JPA:{vendedores:[]}, ITP:{vendedores:[]}, SUL:{vendedores:[]}, KRC:{vendedores:[]} },
         realizado: { GERAL:[], JPA:[], ITP:[], SUL:[], KRC:[] },
-        metaGeral:{fat:0,posit:0,peso:0,pedidos:0},
+        metaGeral:{fat:0,posit:0,peso:0},
         realizadoImportado: false,
         metaFechada: false,
         obsCoord:{}
@@ -2049,9 +2068,8 @@ function parseSheetMeta(rows, ent) {
   const iVend  = Math.max(hdr.findIndex(v => v.includes('vendedor_cliente') || (v.includes('vendedor') && !v.includes('codigo'))), 2);
   const iEnt   = Math.max(hdr.findIndex(v => v === 'entreposto'), 1);
   const iPosit = Math.max(hdr.findIndex(v => v.includes('meta-positivaç') || v.includes('meta positivaç') || v.includes('meta-positivac') || v.includes('positivaç')), 5);
-  const iPed   = Math.max(hdr.findIndex(v => v.includes('meta-pedidos') || v.includes('pedidos')), 6);
-  const iFat   = Math.max(hdr.findIndex(v => v.includes('faturamento')), 7);
-  const iVol   = Math.max(hdr.findIndex(v => v.includes('volume')), 8);
+  const iFat   = Math.max(hdr.findIndex(v => v.includes('faturamento')), 6);
+  const iVol   = Math.max(hdr.findIndex(v => v.includes('volume')), 7);
 
   const vendedores = [];
   let metaGeralFat = 0, metaGeralPosit = 0, metaGeralPeso = 0, metaGeralPed = 0;
@@ -2097,7 +2115,6 @@ function parseSheetMeta(rows, ent) {
       meta_fat    : fatVal,
       meta_peso   : volVal,
       meta_posit  : positVal,
-      meta_pedidos: pedVal,
     });
   }
 
@@ -2105,7 +2122,6 @@ function parseSheetMeta(rows, ent) {
   if(metaGeralFat === 0) metaGeralFat   = vendedores.reduce((s,v)=>s+v.meta_fat,0);
   if(metaGeralPosit === 0) metaGeralPosit = vendedores.reduce((s,v)=>s+v.meta_posit,0);
   if(metaGeralPeso === 0) metaGeralPeso  = vendedores.reduce((s,v)=>s+v.meta_peso,0);
-  if(metaGeralPed === 0) metaGeralPed    = vendedores.reduce((s,v)=>s+v.meta_pedidos,0);
 
   return {
     vendedores,
@@ -2113,7 +2129,6 @@ function parseSheetMeta(rows, ent) {
       fat    : metaGeralFat,
       posit  : metaGeralPosit,
       peso   : metaGeralPeso,
-      pedidos: metaGeralPed,
     }
   };
 }
@@ -2266,12 +2281,11 @@ function salvarImportacao() {
     }
   });
 
-  // Recalcular meta geral incluindo pedidos
+  // Recalcular meta geral
   p.metaGeral = {
     fat    : ENT.reduce((s,e)=>s+(p.metas[e]?.fat||0),0),
     posit  : ENT.reduce((s,e)=>s+(p.metas[e]?.posit||0),0),
     peso   : ENT.reduce((s,e)=>s+(p.metas[e]?.peso||0),0),
-    pedidos: ENT.reduce((s,e)=>s+(p.metas[e]?.pedidos||0),0),
   };
 
   // Guardar também dados brutos para compatibilidade com funções de render existentes
@@ -2311,7 +2325,6 @@ function atualizarMetaGeral() {
   const p = S.hist[key]; if(!p) return;
   p.metaGeral = {
     fat    : getFatInputVal('mgFat'),
-    pedidos: parseFloat(document.getElementById('mgPedidos')?.value)||0,
     posit  : parseFloat(document.getElementById('mgPosit')?.value)||0,
     peso   : parseFloat(document.getElementById('mgPeso')?.value)||0,
   };
@@ -2346,23 +2359,19 @@ function redistribuirGeral() {
 function salvarMetaEntDist(key, e) {
   const p = S.hist[key]; if(!p||!p.metas[e]) return;
   p.metas[e].fat     = getFatInputVal(`dist-fat-${e}`);
-  const fPed = document.getElementById(`dist-pedidos-${e}`);
   const fP   = document.getElementById(`dist-posit-${e}`);
   const fK   = document.getElementById(`dist-peso-${e}`);
-  if(fPed) p.metas[e].pedidos = parseFloat(fPed.value)||0;
   if(fP)   p.metas[e].posit   = parseFloat(fP.value)||0;
   if(fK)   p.metas[e].peso    = parseFloat(fK.value)||0;
   p.metaGeral.fat     = ENT.reduce((s,en)=>s+(p.metas[en]?.fat||0),0);
   p.metaGeral.posit   = ENT.reduce((s,en)=>s+(p.metas[en]?.posit||0),0);
   p.metaGeral.peso    = ENT.reduce((s,en)=>s+(p.metas[en]?.peso||0),0);
-  p.metaGeral.pedidos = ENT.reduce((s,en)=>s+(p.metas[en]?.pedidos||0),0);
   setFatInputVal('mgFat', p.metaGeral.fat);
   const mgP = document.getElementById('mgPosit');
   const mgK = document.getElementById('mgPeso');
   const mgD = document.getElementById('mgPedidos');
   if(mgP) mgP.value = Math.round(p.metaGeral.posit);
   if(mgK) mgK.value = p.metaGeral.peso.toFixed(1);
-  if(mgD) mgD.value = Math.round(p.metaGeral.pedidos);
   save();
   renderDistribuicaoGeral(key);
   if(S.etab.metas===e) renderMetasEntreposto(key, e);
@@ -2404,7 +2413,7 @@ function redistribuirVendedores(key, e) {
 
 function renderDistribuicaoGeral(key) {
   const p = S.hist[key]; if(!p) return;
-  const mg = p.metaGeral||{fat:0,posit:0,peso:0,pedidos:0};
+  const mg = p.metaGeral||{fat:0,posit:0,peso:0};
   const fatTotal = ENT.reduce((s,e)=>s+(p.dados[e]?.totais_real.fat||0),0)||1;
   let html = ENT.filter(e=>p.metas[e]).map(e=>{
     const m=p.metas[e];
@@ -2420,8 +2429,6 @@ function renderDistribuicaoGeral(key) {
           onfocus="fatInputFocus(this)">
       </div>
       <div class="ent-edit-field">
-        <label>📦 Meta Pedidos (un)</label>
-        <input type="number" id="dist-pedidos-${e}" value="${Math.round(m.pedidos||0)}" step="1" min="0"
           onchange="salvarMetaEntDist('${key}','${e}')"
           oninput="document.getElementById('dist-box-${e}').classList.add('changed')"
           style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r6);font-size:12px;font-weight:600;color:var(--blue);text-align:right;font-family:'Inter',sans-serif">
@@ -2448,15 +2455,14 @@ function renderDistribuicaoGeral(key) {
 // ─────────────────────────────────────────────
 function getMetaGeralVendedor(key, nomeVend) {
   const p = S.hist[key];
-  if(!p) return {fat:0, posit:0, peso:0, pedidos:0};  // ✅ PROTEÇÃO
+  if(!p) return {fat:0, posit:0, peso:0};  // ✅ PROTEÇÃO
   
-  let fat=0, posit=0, peso=0, pedidos=0;
+  let fat=0, posit=0, peso=0=0;
   ENT.forEach(e => {
     const m = p.metas?.[e]; if(!m) return;  // ✅ PROTEÇÃO com optional chaining
     const v = m.vendedores?.find(x=>x.nome===nomeVend);
-    if(v) { fat+=v.meta_fat||0; posit+=v.meta_posit||0; peso+=v.meta_peso||0; pedidos+=v.meta_pedidos||0; }
   });
-  return {fat, posit, peso, pedidos};
+  return {fat, posit, peso};
 }
 
 // Faturamento baseado no realizado GERAL importado (preferência) com fallback para soma ENT
@@ -2573,7 +2579,6 @@ function renderMetas() {
   document.getElementById('metaGeralPanel').style.display='block';
   setFatInputVal('mgFat', mg.fat||0);
   const mgPedEl = document.getElementById('mgPedidos');
-  if(mgPedEl) mgPedEl.value = Math.round(mg.pedidos)||0;
   document.getElementById('mgPosit').value = Math.round(mg.posit)||0;
   document.getElementById('mgPeso').value  = (mg.peso||0).toFixed(1);
   renderDistribuicaoGeral(key);
@@ -2807,11 +2812,11 @@ function renderWizardVendedor(key, vendedores, idx, keyAnt, keysAnt) {
   ENT.forEach(e=>{
     const m = p.metas[e]; if(!m) return;
     const v = m.vendedores.find(x=>x.nome===nome);
-    metasPorEnt[e] = v ? {...v} : {meta_fat:0,meta_posit:0,meta_peso:0,meta_pedidos:0};
+    metasPorEnt[e] = v ? {...v} : {meta_fat:0,meta_posit:0,meta_peso:0};
   });
 
   const entHtml = ENT.filter(e=>p.metas[e]).map(e=>{
-    const mv = metasPorEnt[e]||{meta_fat:0,meta_posit:0,meta_peso:0,meta_pedidos:0};
+    const mv = metasPorEnt[e]||{meta_fat:0,meta_posit:0,meta_peso:0};
     const rAnt = realAntPorEnt[e]||0;
     return `<div class="wiz-ent-box" id="wiz-ent-box-${e}">
       <div class="wiz-ent-title">📍 ${e}</div>
@@ -2825,8 +2830,6 @@ function renderWizardVendedor(key, vendedores, idx, keyAnt, keysAnt) {
           onfocus="fatInputFocus(this)">
       </div>
       <div class="wiz-ent-field" style="margin-bottom:6px">
-        <label>📦 Pedidos</label>
-        <input type="number" id="wiz-ent-pedidos-${e}" value="${(mv.meta_pedidos||0).toFixed(0)}" step="1"
           oninput="wizEntChanged('${e}');wizRecalcGeral()" style="width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-weight:600;color:var(--navy);text-align:right">
       </div>
       <div class="wiz-ent-field" style="margin-bottom:6px">
@@ -2902,8 +2905,6 @@ function renderWizardVendedor(key, vendedores, idx, keyAnt, keysAnt) {
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
             <!-- Pedidos -->
             <div>
-              <label style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">📦 Meta Pedidos (un)</label>
-              <input type="number" id="wiz-geral-pedidos" value="${(mgVend.pedidos||0).toFixed(0)}" step="1"
                 style="width:100%;padding:8px 10px;border:2px solid var(--navy);border-radius:7px;font-size:15px;font-weight:700;color:var(--navy);text-align:right"
                 oninput="wizGeralChanged()">
             </div>
@@ -2979,7 +2980,6 @@ function wizEntChanged(e) {
 
 function wizGeralChanged() {
   const novaFat    = getFatInputVal('wiz-geral-fat');
-  const novaPedidos= parseFloat(document.getElementById('wiz-geral-pedidos')?.value)||0;
   const novaPosit  = parseFloat(document.getElementById('wiz-geral-posit')?.value)||0;
   const novaPeso   = parseFloat(document.getElementById('wiz-geral-peso')?.value)||0;
   const key  = WIZ.key;
@@ -2989,7 +2989,6 @@ function wizGeralChanged() {
   let somaF=0, somaD=0, somaP=0, somaK=0;
   ENT.forEach(e=>{ if(!p.metas[e]) return;
     somaF+=getFatInputVal(`wiz-ent-fat-${e}`)||0;
-    somaD+=parseFloat(document.getElementById(`wiz-ent-pedidos-${e}`)?.value)||0;
     somaP+=parseFloat(document.getElementById(`wiz-ent-posit-${e}`)?.value)||0;
     somaK+=parseFloat(document.getElementById(`wiz-ent-peso-${e}`)?.value)||0;
   });
@@ -2998,7 +2997,6 @@ function wizGeralChanged() {
   ENT.forEach(e=>{
     if(!p.metas[e]) return;
     const curF = getFatInputVal(`wiz-ent-fat-${e}`)||0;
-    const curD = parseFloat(document.getElementById(`wiz-ent-pedidos-${e}`)?.value)||0;
     const curP = parseFloat(document.getElementById(`wiz-ent-posit-${e}`)?.value)||0;
     const curK = parseFloat(document.getElementById(`wiz-ent-peso-${e}`)?.value)||0;
     const propF = somaF>0 ? curF/somaF : 1/ENT.length;
@@ -3007,7 +3005,6 @@ function wizGeralChanged() {
     const propK = somaK>0 ? curK/somaK : 1/ENT.length;
     const elF = document.getElementById(`wiz-ent-fat-${e}`);
     if(elF) { const nv=Math.round(novaFat*propF*100)/100; elF.setAttribute('data-raw',nv); elF.value=fmtR(nv); }
-    const elD = document.getElementById(`wiz-ent-pedidos-${e}`);
     if(elD) elD.value = Math.round(novaPedidos*propD);
     const elP = document.getElementById(`wiz-ent-posit-${e}`);
     if(elP) elP.value = (Math.round(novaPosit*propP*10)/10).toFixed(1);
@@ -3023,13 +3020,11 @@ function wizRecalcGeral() {
   ENT.forEach(e=>{
     if(!p.metas[e]) return;
     somaF += getFatInputVal(`wiz-ent-fat-${e}`)||0;
-    somaD += parseFloat(document.getElementById(`wiz-ent-pedidos-${e}`)?.value)||0;
     somaP += parseFloat(document.getElementById(`wiz-ent-posit-${e}`)?.value)||0;
     somaK += parseFloat(document.getElementById(`wiz-ent-peso-${e}`)?.value)||0;
   });
   const elF = document.getElementById('wiz-geral-fat');
   if(elF) { elF.setAttribute('data-raw',somaF); elF.value=fmtR(somaF); }
-  const elD = document.getElementById('wiz-geral-pedidos');
   if(elD) elD.value = Math.round(somaD);
   const elP = document.getElementById('wiz-geral-posit');
   if(elP) elP.value = somaP.toFixed(1);
@@ -3044,7 +3039,6 @@ function wizRecalcSoma() {
   ENT.forEach(e=>{
     if(!p.metas[e]) return;
     somaF += getFatInputVal(`wiz-ent-fat-${e}`)||0;
-    somaD += parseFloat(document.getElementById(`wiz-ent-pedidos-${e}`)?.value)||0;
     somaP += parseFloat(document.getElementById(`wiz-ent-posit-${e}`)?.value)||0;
     somaK += parseFloat(document.getElementById(`wiz-ent-peso-${e}`)?.value)||0;
   });
@@ -3107,13 +3101,11 @@ function wizSalvarVendAtual() {
   ENT.forEach(e=>{
     const m = p.metas[e]; if(!m) return;
     const fatEnt    = getFatInputVal(`wiz-ent-fat-${e}`);
-    const pedidosEnt= parseFloat(document.getElementById(`wiz-ent-pedidos-${e}`)?.value)||0;
     const positEnt  = parseFloat(document.getElementById(`wiz-ent-posit-${e}`)?.value)||0;
     const pesoEnt   = parseFloat(document.getElementById(`wiz-ent-peso-${e}`)?.value)||0;
     let v = m.vendedores.find(x=>x.nome===nome);
-    if(!v) { v={nome,meta_fat:0,meta_pedidos:0,meta_posit:0,meta_peso:0}; m.vendedores.push(v); }
+    if(!v) { v={nome,meta_fat:0,meta_posit:0,meta_peso:0}; m.vendedores.push(v); }
     v.meta_fat     = fatEnt;
-    v.meta_pedidos = pedidosEnt;
     v.meta_posit   = positEnt;
     v.meta_peso    = pesoEnt;
   });
@@ -3719,7 +3711,7 @@ function renderWizardRealVend(key, vendedores, idx) {
   ENT.forEach(e=>{
     const m = p.metas[e];
     const v = m?.vendedores.find(x=>x.nome===nome);
-    metaEntAtual[e] = v || {meta_fat:0,meta_posit:0,meta_peso:0,meta_pedidos:0};
+    metaEntAtual[e] = v || {meta_fat:0,meta_posit:0,meta_peso:0};
   });
 
   // Realizado já salvo (se houver)
@@ -3974,7 +3966,6 @@ async function renderResultado() {
               fat: m.meta_faturamento || 0,
               posit: m.meta_positivacao || 0,
               peso: m.meta_volume || 0,
-              pedidos: m.meta_pedido || 0,
               vendedores: []
             };
           }
@@ -3984,7 +3975,6 @@ async function renderResultado() {
           fat: metasSup.reduce((s,m)=>s+(m.meta_faturamento||0),0),
           posit: metasSup.reduce((s,m)=>s+(m.meta_positivacao||0),0),
           peso: metasSup.reduce((s,m)=>s+(m.meta_volume||0),0),
-          pedidos: metasSup.reduce((s,m)=>s+(m.meta_pedido||0),0)
         };
       }
     } catch(e) {
@@ -3996,14 +3986,13 @@ async function renderResultado() {
 }
 
 function resGeral(key,p) {
-  let mg = p.metaGeral||{fat:0,posit:0,peso:0,pedidos:0};
+  let mg = p.metaGeral||{fat:0,posit:0,peso:0};
   // ✨ Se metaGeral vazio, sincronizar a partir de p.metas[e] de cada entreposto
-  if(!mg.fat && !mg.posit && !mg.peso && !mg.pedidos) {
+  if(!mg.fat && !mg.posit && !mg.peso) {
     mg = {
       fat: ENT.reduce((s,e)=>s+(p.metas[e]?.fat||0),0),
       posit: ENT.reduce((s,e)=>s+(p.metas[e]?.posit||0),0),
       peso: ENT.reduce((s,e)=>s+(p.metas[e]?.peso||0),0),
-      pedidos: ENT.reduce((s,e)=>s+(p.metas[e]?.pedidos||0),0)
     };
   }
   let tRF=0,tRP=0,tRK=0;
@@ -4286,7 +4275,6 @@ async function renderDashboard() {
         meta_fat       : Number(mv.meta_faturamento) || 0,
         meta_posit     : Number(mv.meta_positivacao)  || 0,
         meta_vol       : Number(mv.meta_volume)       || 0,
-        meta_ped       : Number(mv.meta_pedido)       || 0,
         real_fat       : Number(real.faturamento_realizado) || 0,
         real_posit     : Math.round(Number(real.clientes_positivados) || 0),
       };
@@ -4307,7 +4295,7 @@ async function renderDashboard() {
   // Se o banco tem dados mas o cache local está vazio → criar esqueleto mínimo
   // para que o resto da função (gráficos históricos, etc.) não quebre
   if(!p && _dadosVendDB.length > 0) {
-    p = { realizado:{}, metas:{}, metaGeral:{fat:0,posit:0,peso:0,pedidos:0} };
+    p = { realizado:{}, metas:{}, metaGeral:{fat:0,posit:0,peso:0} };
     S.hist[key] = p;
   }
 
@@ -4353,7 +4341,7 @@ async function renderDashboard() {
     const nomesComMeta = new Set();
     ENT.forEach(e => {
       ((p.metas && p.metas[e] && p.metas[e].vendedores) || []).forEach(v => {
-        if(v && v.nome && (v.meta_fat > 0 || v.meta_posit > 0 || v.meta_peso > 0 || v.meta_pedidos > 0)) {
+        if(v && v.nome && (v.meta_fat > 0 || v.meta_posit > 0 || v.meta_peso > 0)) {
           nomesComMeta.add(v.nome);
         }
       });
@@ -4423,12 +4411,11 @@ async function renderDashboard() {
 
   // ── KPIs principais ──────────────────────────────
   // Fonte primária: dados do banco (_dadosVendDB); fallback: metaGeral local
-  let mg = { ...(p.metaGeral || {fat:0, posit:0, peso:0, pedidos:0}) };
+  let mg = { ...(p.metaGeral || {fat:0, posit:0, peso:0}) };
   if(mg.fat === 0) {
     mg.fat     = ENT.reduce((s,e) => s+(p.metas[e]?.fat||0), 0);
     mg.posit   = ENT.reduce((s,e) => s+(p.metas[e]?.posit||0), 0);
     mg.peso    = ENT.reduce((s,e) => s+(p.metas[e]?.peso||0), 0);
-    mg.pedidos = ENT.reduce((s,e) => s+(p.metas[e]?.pedidos||0), 0);
   }
   // Se banco tem metas, recalcular a meta geral a partir das linhas do banco
   if(_dadosVendDB.length > 0) {
@@ -4436,39 +4423,22 @@ async function renderDashboard() {
       fat    : acc.fat     + d.meta_fat,
       posit  : acc.posit   + d.meta_posit,
       peso   : acc.peso    + d.meta_vol,
-      pedidos: acc.pedidos + d.meta_ped,
-    }), {fat:0, posit:0, peso:0, pedidos:0});
+    }), {fat:0, posit:0, peso:0});
     if(_mgDB.fat > 0) mg = _mgDB;
   }
 
-  // ── Meta pedidos apenas dos vendedores cadastrados com meta definida ──
-  let totalPedidosVendedores = 0;
-  let vendedoresComMetaPed = 0;
-  vendedores.forEach(nome => {
-    let pedVend = 0;
-    ENT.forEach(e => {
-      const mv = (p.metas[e]?.vendedores || []).find(v => v.nome === nome);
-      if(mv && Number(mv.meta_pedidos) > 0) pedVend += Number(mv.meta_pedidos);
-    });
-    if(pedVend > 0) { totalPedidosVendedores += pedVend; vendedoresComMetaPed++; }
-  });
-  // Fallback para metaGeral.pedidos se não há meta por vendedor
-  const metaPedidosDisplay = vendedoresComMetaPed > 0 ? totalPedidosVendedores : (mg.pedidos > 0 ? mg.pedidos : 0);
-
   // ── Crescimento Planejado: Meta Atual / Meta Anterior ──
-  const mgAnt    = keyAnterior ? (S.hist[keyAnterior]?.metaGeral || {fat:0,peso:0,pedidos:0}) : null;
+  const mgAnt    = keyAnterior ? (S.hist[keyAnterior]?.metaGeral || {fat:0,peso:0}) : null;
   // Recalcular metaGeral anterior se fat=0
   if(mgAnt && mgAnt.fat === 0 && keyAnterior) {
     const pAnt = S.hist[keyAnterior];
     if(pAnt && pAnt.metas) {
       mgAnt.fat     = ENT.reduce((s,e) => s+(pAnt.metas[e]?.fat||0), 0);
       mgAnt.peso    = ENT.reduce((s,e) => s+(pAnt.metas[e]?.peso||0), 0);
-      mgAnt.pedidos = ENT.reduce((s,e) => s+(pAnt.metas[e]?.pedidos||0), 0);
     }
   }
   // Razão: meta atual ÷ meta anterior (como índice, ex: 1.05 = crescimento de 5%)
   const razaoCrescMeta = mgAnt && mgAnt.fat > 0 ? (mg.fat / mgAnt.fat) : null;
-  const crescPed       = mgAnt && mgAnt.pedidos > 0 ? ((mg.pedidos - mgAnt.pedidos) / mgAnt.pedidos * 100) : null;
 
   const vendAtivosCount = vendedores.filter(n => fatRealVendLocal_(n) > 0).length;
 
@@ -4518,15 +4488,9 @@ async function renderDashboard() {
     ? `${fmtR(mgAnt.fat)} → ${fmtR(mg.fat)} (${razaoCrescMeta >= 1 ? '+' : ''}${fmt((razaoCrescMeta - 1) * 100, 1)}%)`
     : 'Sem mês anterior';
 
-  // Meta pedidos: listar vendedores com meta se houver poucos
-  const pedSubLabel = vendedoresComMetaPed > 0
-    ? `${vendedoresComMetaPed} vendedor${vendedoresComMetaPed > 1 ? 'es' : ''} com meta`
-    : (mg.pedidos > 0 ? 'Meta geral' : 'Nenhuma meta definida');
-
   document.getElementById('dashKpis').innerHTML = `
     ${kpiCard('c-navy','💰 Faturamento Total Realizado ('+key+')', fmtR(totalAtual), keyAnterior?'Ant.: '+fmtR(totalAnt):key, varMes)}
     ${kpiCard('c-azul','📈 Crescimento Planejado (Meta Atual vs Anterior)', crescMetaStr, crescMetaSub, null)}
-    ${kpiCard('c-azul','📦 Meta Pedidos Mês Atual', metaPedidosDisplay > 0 ? fmt(metaPedidosDisplay, 0)+' un' : '—', pedSubLabel, null)}`;
   
   // ✨ Card de Alcance de Metas — positivação: banco (primária) → local (fallback)
   let positRealizado = 0;
@@ -5178,7 +5142,6 @@ async function sincronizarMetasDoSupabase() {
             fat: m.meta_faturamento || 0,
             posit: m.meta_positivacao || 0,
             peso: m.meta_volume || 0,
-            pedidos: m.meta_pedido || 0,
             status: m.status || 'rascunho'
           };
         });
@@ -5186,7 +5149,6 @@ async function sincronizarMetasDoSupabase() {
           fat: metasCoord.reduce((s,m)=>s+(m.meta_faturamento||0),0),
           posit: metasCoord.reduce((s,m)=>s+(m.meta_positivacao||0),0),
           peso: metasCoord.reduce((s,m)=>s+(m.meta_volume||0),0),
-          pedidos: metasCoord.reduce((s,m)=>s+(m.meta_pedido||0),0)
         };
         p._metasSincronizadas = true; // ✨ Marca como sincronizado
       }
@@ -5576,8 +5538,8 @@ function buildRoleSidebar() {
   html += '<nav style="padding:8px 10px;display:flex;flex-direction:column;gap:4px">';
   
   const menus = CU.role==='admin' ?
-    [{id:'admin-overview',ico:'🏠',lbl:'Visão Geral'},{id:'admin-users',ico:'👥',lbl:'Usuários'}] :
-    [{id:'gerente-metas',ico:'🎯',lbl:'Definir Metas'},{id:'gerente-revisoes',ico:'🔄',lbl:'Revisões'},{id:'gerente-dashboard',ico:'📊',lbl:'Dashboard'},{id:'gerente-export',ico:'📄',lbl:'Exportar'}];
+    [{id:'admin-overview',ico:'🏠',lbl:'Visão Geral'},{id:'admin-users',ico:'👥',lbl:'Usuários'},{id:'admin-dashboard',ico:'📊',lbl:'Dashboard'},{id:'admin-export',ico:'📥',lbl:'Exportar XLSX'}] :
+    [{id:'gerente-metas',ico:'🎯',lbl:'Definir Metas'},{id:'gerente-revisoes',ico:'🔄',lbl:'Revisões'},{id:'gerente-dashboard',ico:'📊',lbl:'Dashboard'}];
   
   menus.forEach(m=>{
     html += `<button id="rsnav-${m.id}" onclick="showRolePage('${m.id}')"
@@ -5620,8 +5582,9 @@ function showRolePage(id) {
     if(b) b.remove();
   }
   const loads = { 'admin-overview':loadAdminOverview, 'admin-users':async () => { await loadAllUsers(); renderUsersTable(); },
+    'admin-dashboard':loadAdminDashboard, 'admin-export':loadAdminExport,
     'gerente-metas':loadGerenteMetas, 'gerente-revisoes':loadGerenteRevisoes,
-    'gerente-dashboard':loadGerenteDashboard, 'gerente-export':loadGerenteExport };
+    'gerente-dashboard':loadGerenteDashboard };
   if(loads[id]) {
     const result = loads[id]();
     if(result instanceof Promise) result.catch(e => console.error('Erro ao carregar:', e));
@@ -5811,6 +5774,269 @@ async function loadAdminOverview() {
       </tr>`;
     }).join('')}
     </tbody></table>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  ADMIN: DASHBOARD
+// ══════════════════════════════════════════════════════
+async function loadAdminDashboard() {
+  const periodoVal = document.getElementById('adminDashPeriodo').value;
+  const el = document.getElementById('adminDashContent');
+  if (!periodoVal) {
+    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:32px;margin-bottom:8px">📊</div><div style="font-size:14px">Selecione um período</div></div>';
+    return;
+  }
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b;font-size:13px">⏳ Carregando...</div>';
+
+  await loadAllUsers();
+  const uMap = {}; allUsers.forEach(u => uMap[u.id] = u);
+  const fR = n => n == null ? '—' : 'R$ ' + Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+  const fN = n => n == null ? '—' : Number(n).toLocaleString('pt-BR');
+
+  // Todos os gerentes e coordenadores
+  const gerentes = allUsers.filter(u => u.role === 'gerente');
+  const coords   = allUsers.filter(u => u.role === 'coordenador');
+
+  // Metas do período (qualquer status != rascunho)
+  const metas = await sbGet('metas_coordenadores', `?periodo=eq.${periodoVal}&status=neq.rascunho`) || [];
+
+  // Por gerente: quais coords têm meta definida
+  const metaByGerente = {}; // gerenteId → [metaObj]
+  metas.forEach(m => {
+    if (!metaByGerente[m.gerente_id]) metaByGerente[m.gerente_id] = [];
+    metaByGerente[m.gerente_id].push(m);
+  });
+
+  // Metas por coordenador
+  const metaByCoord = {}; // coordId → metaObj
+  metas.forEach(m => { metaByCoord[m.coordenador_id] = m; });
+
+  // Vendedores distribuídos: buscar metas_vendedores para cada meta finalizada/distribuindo
+  const metasComVend = metas.filter(m => ['finalizada','distribuindo','em_revisao'].includes(m.status));
+  const allMV = [];
+  for (const mc of metasComVend) {
+    const mvs = await sbGet('metas_vendedores', `?meta_coord_id=eq.${mc.id}`) || [];
+    mvs.forEach(mv => allMV.push({ ...mv, coordNome: uMap[mc.coordenador_id]?.nome || '—', gerenteId: mc.gerente_id, entreposto: mc.entreposto }));
+  }
+
+  // ── Card 1: Status por Gerente ──
+  const cardGerente = `
+  <div class="section-card" style="margin-bottom:14px">
+    <div class="section-card-header"><div class="section-card-title">👔 Status por Gerente</div></div>
+    <div class="section-card-body">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f8fafc">
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Gerente</th>
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Entreposto</th>
+          <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Coords com Meta</th>
+          <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:#0047AB;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Total Fat.</th>
+          <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Status</th>
+        </tr></thead>
+        <tbody>
+          ${gerentes.map(g => {
+            const gMetas = metaByGerente[g.id] || [];
+            const totalFat = gMetas.reduce((s,m) => s + (Number(m.meta_faturamento)||0), 0);
+            const ok = gMetas.length > 0;
+            return `<tr style="border-bottom:1px solid #f1f5f9">
+              <td style="padding:10px 14px;font-weight:600">${g.nome}</td>
+              <td style="padding:10px 14px;color:#64748b">${g.entreposto || '—'}</td>
+              <td style="padding:10px 14px;text-align:center">
+                <span style="background:${ok?'#f0fdf4':'#fff0f0'};color:${ok?'#15803d':'#CC0000'};border:1px solid ${ok?'#86efac':'#fca5a5'};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">${gMetas.length} coord${gMetas.length!==1?'s':''}</span>
+              </td>
+              <td style="padding:10px 14px;text-align:right;color:#0047AB;font-weight:700">${totalFat > 0 ? fR(totalFat) : '—'}</td>
+              <td style="padding:10px 14px;text-align:center">
+                <span style="font-size:16px">${ok ? '✅' : '⏳'}</span>
+                <span style="font-size:11px;color:${ok?'#15803d':'#b45309'};font-weight:600">${ok ? 'Definiu' : 'Pendente'}</span>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+
+  // ── Card 2: Distribuição por Coordenador ──
+  const cardCoord = `
+  <div class="section-card" style="margin-bottom:14px">
+    <div class="section-card-header"><div class="section-card-title">📋 Distribuição por Coordenador</div></div>
+    <div class="section-card-body">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f8fafc">
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Coordenador</th>
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Entreposto</th>
+          <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:#0047AB;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Meta Recebida</th>
+          <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Distribuído</th>
+          <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">% Distrib.</th>
+          <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Vendedores</th>
+          <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Status</th>
+        </tr></thead>
+        <tbody>
+          ${metas.length === 0 ? `<tr><td colspan="7" style="padding:30px;text-align:center;color:#94a3b8">Nenhuma meta definida neste período</td></tr>` :
+          metas.map(m => {
+            const mvs = allMV.filter(mv => mv.meta_coord_id === m.id);
+            const distFat = mvs.reduce((s,mv) => s + (Number(mv.meta_faturamento)||0), 0);
+            const recFat  = Number(m.meta_faturamento) || 0;
+            const pct     = recFat > 0 ? (distFat / recFat * 100) : null;
+            const corPct  = pct == null ? '#64748b' : pct >= 95 ? '#15803d' : pct >= 70 ? '#b45309' : '#CC0000';
+            const ST = {rascunho:'✏️ Rascunho',com_coordenador:'📨 Disponível',em_revisao:'🔄 Revisão',finalizada:'✅ Finalizada',distribuindo:'📋 Distribuindo'};
+            return `<tr style="border-bottom:1px solid #f1f5f9">
+              <td style="padding:10px 14px;font-weight:600">${uMap[m.coordenador_id]?.nome || '—'}</td>
+              <td style="padding:10px 14px;color:#64748b">${m.entreposto || '—'}</td>
+              <td style="padding:10px 14px;text-align:right;color:#0047AB;font-weight:700">${recFat > 0 ? fR(recFat) : '—'}</td>
+              <td style="padding:10px 14px;text-align:right;color:#15803d;font-weight:700">${distFat > 0 ? fR(distFat) : '—'}</td>
+              <td style="padding:10px 14px;text-align:center">
+                ${pct != null ? `<span style="font-size:11px;font-weight:700;color:${corPct}">${pct.toFixed(0)}%</span>` : '<span style="color:#94a3b8">—</span>'}
+              </td>
+              <td style="padding:10px 14px;text-align:center;font-weight:700">${mvs.length}</td>
+              <td style="padding:10px 14px;text-align:center;font-size:11px;color:#64748b">${ST[m.status] || m.status}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+
+  // ── Card 3: Todos os vendedores ──
+  const cardVend = `
+  <div class="section-card">
+    <div class="section-card-header"><div class="section-card-title">👥 Vendedores com Meta Definida</div></div>
+    <div class="section-card-body">
+      ${allMV.length === 0
+        ? '<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px">Nenhuma distribuição por vendedor encontrada</div>'
+        : `<table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#f8fafc">
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Vendedor</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Coordenador</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Entreposto</th>
+            <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#0047AB;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Meta Fat.</th>
+            <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#b45309;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Meta Vol.</th>
+            <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Meta Posit.</th>
+          </tr></thead>
+          <tbody>
+            ${allMV.sort((a,b) => (a.coordNome||'').localeCompare(b.coordNome||'')).map(mv => `
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td style="padding:8px 12px;font-weight:600">${mv.vendedor_nome || '—'}</td>
+              <td style="padding:8px 12px;font-size:11px;color:#64748b">${mv.coordNome}</td>
+              <td style="padding:8px 12px;font-size:11px;color:#64748b">${mv.entreposto || '—'}</td>
+              <td style="padding:8px 12px;text-align:right;color:#0047AB;font-weight:600">${Number(mv.meta_faturamento) > 0 ? fR(mv.meta_faturamento) : '—'}</td>
+              <td style="padding:8px 12px;text-align:right;color:#b45309">${Number(mv.meta_volume) > 0 ? fN(mv.meta_volume) : '—'}</td>
+              <td style="padding:8px 12px;text-align:right;color:#15803d">${Number(mv.meta_positivacao) > 0 ? fN(mv.meta_positivacao) : '—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`}
+    </div>
+  </div>`;
+
+  el.innerHTML = cardGerente + cardCoord + cardVend;
+}
+
+// ══════════════════════════════════════════════════════
+//  ADMIN: EXPORTAR XLSX
+// ══════════════════════════════════════════════════════
+async function loadAdminExport() {
+  const periodoVal = document.getElementById('adminExportPeriodo').value;
+  const previewEl  = document.getElementById('adminExportPreview');
+  const infoEl     = document.getElementById('adminExportInfo');
+  const btnEl      = document.getElementById('btnAdminXLSX');
+  if (!periodoVal) {
+    previewEl.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">Selecione um período acima</div>';
+    btnEl.style.display = 'none';
+    return;
+  }
+  previewEl.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;font-size:13px">⏳ Carregando...</div>';
+  btnEl.style.display = 'none';
+
+  await loadAllUsers();
+  const uMap = {}; allUsers.forEach(u => uMap[u.id] = u);
+  const fR = n => 'R$ ' + Number(n||0).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+  const fN = n => Number(n||0).toLocaleString('pt-BR');
+
+  const metas = await sbGet('metas_coordenadores', `?periodo=eq.${periodoVal}&status=neq.rascunho&order=entreposto`) || [];
+
+  // Buscar metas_vendedores para cada coordenador
+  const coordData = [];
+  for (const mc of metas) {
+    const mvs = await sbGet('metas_vendedores', `?meta_coord_id=eq.${mc.id}&order=vendedor_nome`) || [];
+    coordData.push({ mc, mvs, coordNome: uMap[mc.coordenador_id]?.nome || '—' });
+  }
+
+  const totalVend = coordData.reduce((s, d) => s + d.mvs.length, 0);
+
+  if (coordData.length === 0) {
+    previewEl.innerHTML = '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px;font-size:13px;color:#b45309">Nenhuma meta encontrada para este período.</div>';
+    infoEl.textContent = '';
+    return;
+  }
+
+  // Montar preview em HTML
+  const rows = coordData.map(d => `
+    <tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 12px;font-weight:600">${d.coordNome}</td>
+      <td style="padding:8px 12px;color:#64748b">${d.mc.entreposto || '—'}</td>
+      <td style="padding:8px 12px;text-align:right;color:#0047AB;font-weight:600">${fR(d.mc.meta_faturamento)}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:700">${d.mvs.length}</td>
+    </tr>`).join('');
+
+  previewEl.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+      <thead><tr style="background:#f8fafc">
+        <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Coordenador</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Entreposto</th>
+        <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:#0047AB;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Meta Fat.</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Vendedores</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  infoEl.textContent = `${coordData.length} coordenador(es) · ${totalVend} vendedor(es) · ${metas.length} entreposto(s)`;
+  btnEl.style.display = '';
+  btnEl.dataset.periodo = periodoVal;
+  window._adminExportData = coordData;
+}
+
+async function adminGerarXLSX() {
+  const coordData = window._adminExportData;
+  if (!coordData || !coordData.length) { alert('Sem dados. Atualize o período primeiro.'); return; }
+  const btn = document.getElementById('btnAdminXLSX');
+  btn.disabled = true; btn.textContent = '⏳ Gerando...';
+
+  try {
+    const wb = XLSX.utils.book_new();
+    const periodoVal = btn.dataset.periodo || '';
+    // Calcular serial Excel do 1º dia do mês
+    const [ano, mes] = periodoVal.split('-').map(Number);
+    const d0 = new Date(1900, 0, 0); // 1899-12-30 em JS
+    const dMes = new Date(ano, mes - 1, 1);
+    const excelSerial = Math.round((dMes - d0) / 86400000) + 1;
+
+    for (const { mc, mvs, coordNome } of coordData) {
+      const ent = (mc.entreposto || '').toUpperCase();
+      const headers = ['DATA', 'ENTREPOSTO', 'Vendedor_cliente', 'NOME_SUPERVISOR', 'META-POSITIVAÇÃO', `${ent}-META FATURAMENTO`, `${ent}-META VOLUME`];
+      const rows = mvs.map(mv => [
+        excelSerial,
+        ent,
+        mv.vendedor_nome || '—',
+        coordNome,
+        Number(mv.meta_positivacao) || 0,
+        Number(mv.meta_faturamento) || 0,
+        Number(mv.meta_volume) || 0,
+      ]);
+
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{wch:10},{wch:12},{wch:30},{wch:28},{wch:18},{wch:22},{wch:18}];
+
+      let sheetName = coordNome.replace(/[:\\/?*\[\]]/g,'').substring(0, 28);
+      let finalName = sheetName, sfx = 1;
+      while (wb.SheetNames.includes(finalName)) finalName = sheetName.substring(0,25) + ` ${++sfx}`;
+
+      XLSX.utils.book_append_sheet(wb, ws, finalName);
+    }
+
+    const mesLabel = MESES[mes-1] || String(mes);
+    XLSX.writeFile(wb, `metas_${mesLabel}_${ano}.xlsx`);
+  } finally {
+    btn.disabled = false; btn.textContent = '⬇️ Baixar XLSX';
   }
 }
 
@@ -6105,7 +6331,6 @@ async function renderGCoordDistribuicao() {
   const macroFatGer = coords.reduce((s,c) => { const m=gMCache[c.id]; return s+(m?Number(m.meta_faturamento)||0:0); }, 0);
   const macroVolGer = coords.reduce((s,c) => { const m=gMCache[c.id]; return s+(m?Number(m.meta_volume)||0:0); }, 0);
   const macroPosGer = coords.reduce((s,c) => { const m=gMCache[c.id]; return s+(m?Number(m.meta_positivacao)||0:0); }, 0);
-  const macroPedGer = coords.reduce((s,c) => { const m=gMCache[c.id]; return s+(m?Number(m.meta_pedido)||0:0); }, 0);
 
   // ── Painel de meta geral do gerente (inputs editáveis) ──
   const panelHtml = `
@@ -6202,11 +6427,6 @@ async function renderGCoordDistribuicao() {
           oninput="_gAtualizarTotais('${coords.map(x=>x.id).join(',')}')">
       </td>
       <td style="padding:6px 8px;text-align:right;font-size:11px;font-weight:600;color:#374151;background:#f0fdf4" title="Média de ${nMeses} mes${nMeses!==1?'es':''} com dados">${fmtN(mediaPos)}</td>
-      <!-- PEDIDOS -->
-      <td style="padding:6px 8px;border-left:1px solid var(--border)">
-        <input id="gd-${c.id}" type="number" value="${m?m.meta_pedido||'':''}" placeholder="0" ${dis} style="${inpStyle}" ${inpFocus}
-          oninput="_gAtualizarTotais('${coords.map(x=>x.id).join(',')}')">
-      </td>
       <!-- AÇÕES -->
       <td style="padding:6px 10px;border-left:1px solid var(--border);white-space:nowrap;min-width:180px">
         <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
@@ -6247,7 +6467,7 @@ async function renderGCoordDistribuicao() {
                 <th colspan="2" style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:#0047AB;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:#e8f0fb;border-left:1px solid var(--blue-20)">💰 Faturamento</th>
                 <th colspan="1" style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:var(--amber-10);border-left:1px solid #fde68a">⚖️ Volume (kg)</th>
                 <th colspan="2" style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:#f0fdf4;border-left:1px solid #86efac">✅ Positivação</th>
-                <th colspan="1" style="padding:10px 8px;text-align:center;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)" rowspan="2">📦 Pedidos</th>
+                
                 <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)" rowspan="2">Ações</th>
               </tr>
               <tr style="background:var(--gray-50)">
@@ -6310,7 +6530,7 @@ async function salvarMetaGeralCoordenador(periodo) {
       S.hist[periodoFormatado] = {
         metas: { JPA:{vendedores:[]}, ITP:{vendedores:[]}, SUL:{vendedores:[]}, KRC:{vendedores:[]} },
         realizado: { GERAL:[], JPA:[], ITP:[], SUL:[], KRC:[] },
-        metaGeral: {fat:0, posit:0, peso:0, pedidos:0},
+        metaGeral: {fat:0, posit:0, peso:0},
         realizadoImportado: false,
         metaFechada: false,
         obsCoord: {}
@@ -6322,7 +6542,6 @@ async function salvarMetaGeralCoordenador(periodo) {
       fat: fat,
       posit: pos,
       peso: vol,
-      pedidos: ped
     };
     
     console.log(`✅ Meta Geral salva: Fat R$ ${fat} | Vol ${vol}kg | Pos ${pos} | Ped ${ped}`);
@@ -6342,7 +6561,7 @@ async function salvarMetaGeralGerente(periodo) {
   const ped = parseFloat(document.getElementById('gMetaPed')?.value)||0;
   try {
     const rows = await sbGet('gerentes_metas_geral', `?gerente_id=eq.${CU.id}&periodo=eq.${periodo}`);
-    const row = { gerente_id: CU.id, periodo, meta_faturamento: fat, meta_volume: vol, meta_positivacao: pos, meta_pedido: ped, atualizado_em: new Date().toISOString() };
+    const row = { gerente_id: CU.id, periodo, meta_faturamento: fat, meta_volume: vol, meta_positivacao: pos atualizado_em: new Date().toISOString() };
     if (rows && rows.length) {
       await sbPatch('gerentes_metas_geral', `?gerente_id=eq.${CU.id}&periodo=eq.${periodo}`, row);
     } else {
@@ -6361,7 +6580,6 @@ async function carregarMetaGeralGerente(periodo) {
       const setN = (id, v) => { const e = document.getElementById(id); if(e) e.value = v||0; };
       setN('gMetaVol', r.meta_volume);
       setN('gMetaPos', r.meta_positivacao);
-      setN('gMetaPed', r.meta_pedido);
       if(window._gCoordIdsAtivos) _gAtualizarTotais(window._gCoordIdsAtivos);
     }
   } catch(e) { console.warn('Erro ao carregar meta geral gerente:', e); }
@@ -6380,7 +6598,7 @@ function _gAtualizarTotais(coordIdsStr) {
   const fmtR = n => n !== 0 ? 'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
   const fmtN = n => n !== 0 ? Number(n).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '—';
 
-  let sF=0, sV=0, sP=0, sD=0;
+  let sF=0, sV=0, sP=0;
   ids.forEach(id => {
     const elF = document.getElementById('gf-'+id);
     sF += elF ? (parseFloat(elF.getAttribute('data-raw'))||parseFloat(elF.value)||0) : 0;
@@ -6501,7 +6719,6 @@ function gGetVals(cid){
     meta_faturamento: elF ? (parseFloat(elF.getAttribute('data-raw'))||parseFloat(elF.value)||0) : 0,
     meta_volume:parseFloat(document.getElementById('gv-'+cid).value)||0,
     meta_positivacao:parseFloat(document.getElementById('gp-'+cid).value)||0,
-    meta_pedido:parseFloat(document.getElementById('gd-'+cid).value)||0,
   };
 }
 
@@ -6513,7 +6730,7 @@ async function gSalvar(cid,mid,periodo) {
 
 async function gDisponibilizar(cid,mid,periodo) {
   const vals=gGetVals(cid);
-  if(!vals.meta_faturamento&&!vals.meta_volume&&!vals.meta_positivacao&&!vals.meta_pedido){alert('Preencha ao menos um campo.');return;}
+  if(!vals.meta_faturamento&&!vals.meta_volume&&!vals.meta_positivacao){alert('Preencha ao menos um campo.');return;}
   const p={coordenador_id:cid,gerente_id:CU.id,ultimo_gerente_id:CU.id,entreposto:CU.entreposto,periodo,...vals,status:'com_coordenador',travado:false,obs_coordenador:'',atualizado_em:new Date().toISOString()};
   mid?await sbPatch('metas_coordenadores','?id=eq.'+mid,p):await sbPost('metas_coordenadores',p);
   await sbNotif(cid,CU.id,`🎯 ${CU.entreposto} — Suas metas de ${periodo} estão disponíveis. Acesse o app.`);
@@ -6527,7 +6744,7 @@ async function gSalvarTodos(coordIdsStr, periodo) {
   let ok = 0, skip = 0;
   for(const cid of ids) {
     const vals = gGetVals(cid);
-    if(!vals.meta_faturamento && !vals.meta_volume && !vals.meta_positivacao && !vals.meta_pedido) { skip++; continue; }
+    if(!vals.meta_faturamento && !vals.meta_volume && !vals.meta_positivacao ) { skip++; continue; }
     const rows = await sbGet('metas_coordenadores', `?coordenador_id=eq.${cid}&gerente_id=eq.${CU.id}&periodo=eq.${periodo}&select=id,status`);
     const m = rows && rows[0];
     if(m && (m.status === 'finalizada' || m.status === 'com_coordenador')) { skip++; continue; }
@@ -6547,7 +6764,7 @@ async function gEnviarParaTodos(coordIdsStr, periodo) {
   const disponiveis = [];
   for(const cid of ids) {
     const vals = gGetVals(cid);
-    if(!vals.meta_faturamento && !vals.meta_volume && !vals.meta_positivacao && !vals.meta_pedido) continue;
+    if(!vals.meta_faturamento && !vals.meta_volume && !vals.meta_positivacao ) continue;
     const rows = await sbGet('metas_coordenadores', `?coordenador_id=eq.${cid}&gerente_id=eq.${CU.id}&periodo=eq.${periodo}&select=id,status`);
     const m = rows && rows[0];
     if(m && (m.status === 'finalizada' || m.status === 'com_coordenador')) continue;
@@ -7023,8 +7240,8 @@ window.gdFiltrarRanking = function() {
   });
 };
 
-// ── GERENTE: EXPORTAR ──
-async function loadGerenteExport() {
+// ── (removido: loadGerenteExport) ──
+async function _removedGerenteExport() {
   await loadAllUsers();
   const metas=await sbGet('metas_coordenadores',`?gerente_id=eq.${CU.id}&status=eq.finalizada`)||[];
   exportData=metas;
@@ -7034,9 +7251,9 @@ async function loadGerenteExport() {
   const fmt=n=>n==null?'—':Number(n).toLocaleString('pt-BR');
   const el=document.getElementById('gExportTable');
   el.innerHTML=!metas.length?'<div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:12px;font-size:13px;color:#b45309">Nenhuma meta finalizada.</div>':
-    `<table><thead><tr><th>Coordenador</th><th>Período</th><th>Fat. (R$)</th><th>Volume</th><th>Positivação</th><th>Pedidos</th></tr></thead><tbody>
+    `<table><thead><tr><th>Coordenador</th><th>Período</th><th>Fat. (R$)</th><th>Volume</th><th>Positivação</th></tr></thead><tbody>
     ${metas.map(m=>`<tr><td><strong>${uMap[m.coordenador_id]||'—'}</strong></td><td>${m.periodo}</td>
-      <td>${fmtR(m.meta_faturamento)}</td><td>${fmt(m.meta_volume)}</td><td>${fmt(m.meta_positivacao)}</td><td>${fmt(m.meta_pedido)}</td></tr>`).join('')}
+      <td>${fmtR(m.meta_faturamento)}</td><td>${fmt(m.meta_volume)}</td><td>${fmt(m.meta_positivacao)}</td></tr>`).join('')}
     </tbody></table>`;
 }
 
@@ -7068,7 +7285,6 @@ async function exportXLSX() {
       // Cabeçalho metas macro do coordenador
       ['📊 METAS MACRO DO COORDENADOR', '', '', '', ''],
       ['Faturamento (R$)', 'Volume (kg)', 'Positivação', 'Pedidos', ''],
-      [fmtR(m.meta_faturamento), fmtR(m.meta_volume), fmtR(m.meta_positivacao), fmtR(m.meta_pedido), ''],
       [],
       // Cabeçalho vendedores
       ['👥 DISTRIBUIÇÃO POR VENDEDOR', '', '', '', ''],
@@ -7082,14 +7298,12 @@ async function exportXLSX() {
           fmtR(v.meta_faturamento),
           fmtR(v.meta_volume),
           fmtR(v.meta_positivacao),
-          fmtR(v.meta_pedido),
         ]);
       });
       // Linha de totais dos vendedores
       const totFat  = vmetas.reduce((s,v)=>s+fmtR(v.meta_faturamento),0);
       const totVol  = vmetas.reduce((s,v)=>s+fmtR(v.meta_volume),0);
       const totPos  = vmetas.reduce((s,v)=>s+fmtR(v.meta_positivacao),0);
-      const totPed  = vmetas.reduce((s,v)=>s+fmtR(v.meta_pedido),0);
       sheetRows.push(['TOTAL VENDEDORES', totFat, totVol, totPos, totPed]);
     } else {
       sheetRows.push(['Nenhum vendedor distribuído', '', '', '', '']);
@@ -7129,7 +7343,6 @@ async function exportXLSX() {
       fmtR(m.meta_faturamento),
       fmtR(m.meta_volume),
       fmtR(m.meta_positivacao),
-      fmtR(m.meta_pedido),
     ]);
   });
   const wsResumo = XLSX.utils.aoa_to_sheet(resumoRows);
@@ -7143,7 +7356,7 @@ async function exportXLSX() {
 function exportCSV() {
   if(!exportData.length){alert('Nenhuma meta.');return;}
   let csv='Coordenador,Entreposto,Periodo,Faturamento,Volume,Positivacao,Pedidos\n';
-  exportData.forEach(m=>{ csv+=`${exportUMap[m.coordenador_id]||'—'},${m.entreposto||CU.entreposto},${m.periodo},${m.meta_faturamento},${m.meta_volume},${m.meta_positivacao},${m.meta_pedido}\n`; });
+  exportData.forEach(m=>{ csv+=`${exportUMap[m.coordenador_id]||'—'},${m.entreposto||CU.entreposto},${m.periodo},${m.meta_faturamento},${m.meta_volume},${m.meta_positivacao}\n`; });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download=`metas_${CU.entreposto}_${Date.now()}.csv`;
@@ -7179,7 +7392,6 @@ async function loadMetasGerente() {
         <div><span style="color:#64748b">Fat: </span><strong style="color:#0047AB">${fmtR(m.meta_faturamento)}</strong></div>
         <div><span style="color:#64748b">Vol: </span><strong>${fmt(m.meta_volume)} kg</strong></div>
         <div><span style="color:#64748b">Pos: </span><strong>${fmt(m.meta_positivacao)}</strong></div>
-        <div><span style="color:#64748b">Ped: </span><strong>${fmt(m.meta_pedido)}</strong></div>
       </div>
       ${m.obs_gerente?`<div style="margin-top:6px;font-size:11px;color:#CC0000">📝 ${m.obs_gerente}</div>`:''}
       ${m.status==='com_coordenador'&&!m.travado?`<div style="margin-top:8px;display:flex;gap:6px">
@@ -7520,7 +7732,6 @@ async function removerVendedor(id, nome) {
 // ══════════════════════════════════════════════════════
 //  AUTO-DISTRIBUIÇÃO POR % DO MÊS PASSADO (Metas Recebidas)
 // ══════════════════════════════════════════════════════
-function autoDistribuirPorMeta(metaId, periodo, entreposto, vendStr, macroFat, macroVol, macroPos, macroPed) {
   // Parse vendedores: "id::nome|id::nome"
   const vendPairs = vendStr.split('|').filter(Boolean).map(s => {
     const [id, nome] = s.split('::');
@@ -7571,13 +7782,10 @@ function autoDistribuirPorMeta(metaId, periodo, entreposto, vendStr, macroFat, m
     const pctFat = semHistorico || teamFat === 0 ? (1/n) : vFat / teamFat;
     const pctPos = semHistorico || teamPos === 0 ? (1/n) : vPos / teamPos;
     const pctVol = semHistorico || teamVol === 0 ? (1/n) : vVol / teamVol;
-    // Pedidos: distribuir igualmente (não há histórico de pedidos por vendedor)
-    const pctPed = 1 / n;
 
     const novoFat = Math.round(pctFat * macroFat * 100) / 100;
     const novoPos = Math.round(pctPos * macroPos);
     const novoVol = Math.round(pctVol * macroVol * 10) / 10;
-    const novoPed = Math.round(pctPed * macroPed);
 
     // Preencher inputs de faturamento (fat-input com máscara)
     const elFat = document.getElementById(`vf-${metaId}-${v.id}`);
@@ -7597,7 +7805,6 @@ function autoDistribuirPorMeta(metaId, periodo, entreposto, vendStr, macroFat, m
   });
 
   // Atualizar validação ao vivo
-  _atualizarSomaLive(metaId, vendPairs.map(v=>v.id).join(','), macroFat, macroVol, macroPos, macroPed);
 
   // Feedback visual
   const aviso = semHistorico
@@ -7662,7 +7869,6 @@ async function loadMetasRecebidasPage() {
     const macroFat = m.meta_faturamento || 0;
     const macroVol = m.meta_volume      || 0;
     const macroPos = m.meta_positivacao || 0;
-    const macroPed = m.meta_pedido      || 0;
 
     // ── VENDOR DISTRIBUTION ROWS ──
     // Filtrar vendedores inativos no mês desta meta (regra de trava)
@@ -7768,8 +7974,6 @@ async function loadMetasRecebidasPage() {
         <!-- FAT: meta | real ant | media 3m -->
         <td style="padding:6px 8px;background:#e8f0fb;border-left:1px solid var(--blue-20)"><input id="vf-${m.id}-${v.id}" class="fat-input sm" type="text"
           value="${existing.meta_faturamento?fmtR(existing.meta_faturamento):'R$ 0,00'}" data-raw="${existing.meta_faturamento||0}" placeholder="R$ 0,00" ${dis} style="${inpStyle};text-align:right" autocomplete="off"
-          oninput="fatInputMask(this);_atualizarSomaLive('${m.id}','${vends.map(x=>x.id).join(',')}',${macroFat},${macroVol},${macroPos},${macroPed})"
-          onblur="fatInputBlur(this,function(){_atualizarSomaLive('${m.id}','${vends.map(x=>x.id).join(',')}',${macroFat},${macroVol},${macroPos},${macroPed});})"
           onfocus="fatInputFocus(this)"></td>
         <td style="${refCellStyle('#e8f0fb','#374151')}">${fmtRef(fatAntV)}</td>
         <td style="${refCellStyle('#e8f0fb','#065f46')}">${fmtRef(mediaFatV)}</td>
@@ -7777,18 +7981,15 @@ async function loadMetasRecebidasPage() {
         <!-- POSIT: meta | real ant | media 3m -->
         <td style="padding:6px 8px;background:#f0fdf4;border-left:1px solid #86efac"><input id="vp-${m.id}-${v.id}" type="number"
           value="${existing.meta_positivacao||''}" placeholder="0" ${dis} style="${inpStyle}" ${inpFocus}
-          oninput="_atualizarSomaLive('${m.id}','${vends.map(x=>x.id).join(',')}',${macroFat},${macroVol},${macroPos},${macroPed})"></td>
         <td style="${refCellStyle('#f0fdf4','#374151')}">${fmtNRef(posAntV)}</td>
         <td style="${refCellStyle('#f0fdf4','#065f46')}">${fmtNRef(mediaPosV)}</td>
         <td class="col-pct" style="background:#f0fdf4;color:${pctColor(pctPosV)}">${fmtPct(pctPosV)}</td>
         <!-- VOL: meta only -->
         <td style="padding:6px 8px;background:var(--amber-10);border-left:1px solid #fde68a"><input id="vv-${m.id}-${v.id}" type="number"
           value="${existing.meta_volume||''}" placeholder="0" ${dis} style="${inpStyle}" ${inpFocus}
-          oninput="_atualizarSomaLive('${m.id}','${vends.map(x=>x.id).join(',')}',${macroFat},${macroVol},${macroPos},${macroPed})"></td>
         <!-- PEDIDOS -->
         <td style="padding:6px 8px;border-left:1px solid var(--border)"><input id="vd-${m.id}-${v.id}" type="number"
-          value="${existing.meta_pedido||''}" placeholder="0" ${dis} style="${inpStyle}" ${inpFocus}
-          oninput="_atualizarSomaLive('${m.id}','${vends.map(x=>x.id).join(',')}',${macroFat},${macroVol},${macroPos},${macroPed})"></td>
+ placeholder="0" ${dis} style="${inpStyle}" ${inpFocus}
       </tr>`;
     }).join('') : `<tr><td colspan="11" style="padding:20px;text-align:center;font-size:13px;color:var(--text2)">Nenhum vendedor ativo no mês. Cadastre/ative na aba <strong>Vendedores</strong>.</td></tr>`;
 
@@ -7804,7 +8005,6 @@ async function loadMetasRecebidasPage() {
     const acoesBtns = !locked && vends.length ? `
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-sm" style="background:#15803d;color:#fff;font-weight:700;font-size:12px;padding:9px 18px;box-shadow:0 2px 6px rgba(21,128,61,.25)"
-          onclick="enviarPlanejamentoAoGerente('${m.id}','${m.gerente_id}','${m.periodo}','${vends.map(x=>x.id).join(',')}',${macroFat},${macroVol},${macroPos},${macroPed})">
           📤 Enviar Planejamento ao Gerente
         </button>
         <button class="btn btn-sm" onclick="salvarDistribCoord('${m.id}','${m.periodo}')">💾 Salvar Rascunho</button>
@@ -7849,7 +8049,6 @@ async function loadMetasRecebidasPage() {
           </div>
           <div style="background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r8);padding:12px 14px">
             <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📦 Pedidos</div>
-            <div style="font-size:18px;font-weight:800">${fmtN(macroPed)}</div>
           </div>
         </div>
 
@@ -7858,7 +8057,6 @@ async function loadMetasRecebidasPage() {
           <span style="display:inline-block;width:3px;height:14px;background:var(--green);border-radius:2px"></span>
           Distribuição por Vendedor Ativo
           ${vends.length ? `<span style="background:var(--green-20);color:var(--green);border-radius:20px;padding:2px 8px;font-size:10px;margin-left:4px">${vends.length} vendedor${vends.length>1?'es':''}</span>` : ''}
-          ${!locked && vends.length ? `<button class="btn btn-sm" style="margin-left:8px;background:#0047AB;color:#fff;font-size:11px;padding:5px 12px;font-weight:700;text-transform:none;letter-spacing:0" onclick="autoDistribuirPorMeta('${m.id}','${m.periodo}','${m.entreposto}','${vends.map(x=>x.id+'::'+(x.nome||'')).join('|')}',${macroFat},${macroVol},${macroPos},${macroPed})" title="Distribui o teto automaticamente entre os vendedores, proporcionalmente ao realizado do mês passado">⚡ Auto-distribuir por % mês passado</button>` : ''}
           <span style="margin-left:auto;font-size:10px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">Colunas de referência baseadas no histórico local</span>
         </div>
         <div style="overflow-x:auto;margin-bottom:14px">
@@ -7869,7 +8067,7 @@ async function loadMetasRecebidasPage() {
                 <th colspan="4" style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:#0047AB;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:#e8f0fb;border-left:1px solid var(--blue-20)">💰 Faturamento</th>
                 <th colspan="4" style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:#f0fdf4;border-left:1px solid #86efac">✅ Positivação</th>
                 <th colspan="1" style="padding:6px 8px;text-align:center;font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:var(--amber-10);border-left:1px solid #fde68a">⚖️ Volume (kg)</th>
-                <th style="padding:10px 8px;text-align:right;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);border-left:1px solid var(--border)" rowspan="2">📦 Pedidos</th>
+                
               </tr>
               <tr style="background:var(--gray-50)">
                 <th style="padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#0047AB;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);background:#e8f0fb;border-left:1px solid var(--blue-20)">Meta</th>
@@ -7909,9 +8107,8 @@ async function loadMetasRecebidasPage() {
 }
 
 // ── LIVE VALIDATION: soma parcial vs teto ──
-function _atualizarSomaLive(metaId, vendIdsStr, macroFat, macroVol, macroPos, macroPed) {
   const ids = vendIdsStr.split(',').filter(Boolean);
-  let sF=0,sV=0,sP=0,sD=0;
+  let sF=0,sV=0,sP=0;
   ids.forEach(vid => {
     const elVF = document.getElementById(`vf-${metaId}-${vid}`);
     sF += elVF ? (parseFloat(elVF.getAttribute('data-raw'))||parseFloat(elVF.value)||0) : 0;
@@ -7942,13 +8139,11 @@ function _atualizarSomaLive(metaId, vendIdsStr, macroFat, macroVol, macroPos, ma
   if(elF) elF.innerHTML = valHtml(sF, macroFat, '💰 Faturamento', fmtRi, 50000);
   if(elV) elV.innerHTML = valHtml(sV, macroVol, '⚖️ Volume', v=>fmtNi(v)+' kg');
   if(elP) elP.innerHTML = valHtml(sP, macroPos, '✅ Positivação', fmtNi);
-  if(elD) elD.innerHTML = valHtml(sD, macroPed, '📦 Pedidos', fmtNi);
 }
 
 // ── ENVIAR PLANEJAMENTO AO GERENTE (com validação e bloqueio) ──
-async function enviarPlanejamentoAoGerente(metaId, gerenteId, periodo, vendIdsStr, macroFat, macroVol, macroPos, macroPed) {
   const ids = vendIdsStr.split(',').filter(Boolean);
-  let sF=0,sV=0,sP=0,sD=0;
+  let sF=0,sV=0,sP=0;
   ids.forEach(vid => {
     const elVF2 = document.getElementById(`vf-${metaId}-${vid}`);
     sF += elVF2 ? (parseFloat(elVF2.getAttribute('data-raw'))||parseFloat(elVF2.value)||0) : 0;
@@ -7965,7 +8160,6 @@ async function enviarPlanejamentoAoGerente(metaId, gerenteId, periodo, vendIdsSt
   }
   if(macroVol > 0 && sV > macroVol + TOL) erros.push(`• Volume: soma ${sV.toLocaleString('pt-BR')} kg excede o teto ${macroVol.toLocaleString('pt-BR')} kg`);
   if(macroPos > 0 && sP > macroPos + TOL) erros.push(`• Positivação: soma ${sP} excede o teto ${macroPos}`);
-  if(macroPed > 0 && sD > macroPed + TOL) erros.push(`• Pedidos: soma ${sD} excede o teto ${macroPed}`);
   if(erros.length) {
     alert('⚠️ Validação falhou — a soma das micrometas excede o limite permitido:\n\n' + erros.join('\n') + '\n\nAjuste os valores antes de enviar.\n\nLembrete: o Faturamento pode exceder o teto em até R$ 50.000.');
     return;
@@ -8008,7 +8202,7 @@ async function enviarPlanejamentoAoGerente(metaId, gerenteId, periodo, vendIdsSt
       meta_faturamento : fat,
       meta_volume      : vol,
       meta_positivacao : pos,
-      meta_pedido      : ped,
+
       vendedor_nome    : vendNome,
       meta_coord_id    : metaId,
       vendedor_id      : vid,
@@ -8082,7 +8276,7 @@ async function salvarDistribCoord(metaId, periodo) {
         meta_faturamento : fat,
         meta_volume      : vol,
         meta_positivacao : pos,
-        meta_pedido      : ped,
+
         vendedor_nome    : v.nome,
         meta_coord_id    : metaId,
         atualizado_em    : new Date().toISOString()
@@ -8194,15 +8388,13 @@ async function renderMetaGeralAcumulada() {
     const totalFat = group.reduce((a,m)=>(a+(m.meta_faturamento||0)),0);
     const totalVol = group.reduce((a,m)=>(a+(m.meta_volume||0)),0);
     const totalPos = group.reduce((a,m)=>(a+(m.meta_positivacao||0)),0);
-    const totalPed = group.reduce((a,m)=>(a+(m.meta_pedido||0)),0);
-
     const stLabel = {rascunho:'✏️ Rascunho',com_coordenador:'📨 Disponível',em_revisao:'🔄 Em Revisão',finalizada:'✅ Finalizada',distribuindo:'📋 Distribuindo'};
     const rowsEnt = group.map(m => `<tr>
       <td style="padding:10px 14px;font-size:13px;font-weight:600">${m.entreposto||'—'}</td>
       <td style="padding:10px 14px;text-align:right;font-size:13px;color:var(--blue);font-weight:700">${fmtR(m.meta_faturamento)}</td>
       <td style="padding:10px 14px;text-align:right;font-size:13px">${fmtN(m.meta_volume)}</td>
       <td style="padding:10px 14px;text-align:right;font-size:13px">${fmtN(m.meta_positivacao)}</td>
-      <td style="padding:10px 14px;text-align:right;font-size:13px">${fmtN(m.meta_pedido)}</td>
+      
       <td style="padding:10px 14px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:${m.status==='em_revisao'?'#fffbeb':m.status==='finalizada'?'#f0fdf4':m.status==='distribuindo'?'#e8f0fb':'#f1f5f9'};color:${m.status==='em_revisao'?'#b45309':m.status==='finalizada'?'#15803d':m.status==='distribuindo'?'#0047AB':'#64748b'}">${stLabel[m.status]||m.status}</span></td>
     </tr>`).join('');
 
@@ -8242,7 +8434,7 @@ async function renderMetaGeralAcumulada() {
               <th style="text-align:right">Faturamento</th>
               <th style="text-align:right">Volume (kg)</th>
               <th style="text-align:right">Positivação</th>
-              <th style="text-align:right">Pedidos</th>
+              
               <th>Status</th>
             </tr></thead>
             <tbody>${rowsEnt}</tbody>
@@ -8285,7 +8477,7 @@ async function syncVendedoresFromSupabase() {
       vends.forEach(v => {
         if(!S.hist[key].metas[ent].vendedores.find(ev=>ev.nome===v.nome)) {
           S.hist[key].metas[ent].vendedores.push({
-            nome: v.nome, meta_fat:0, meta_peso:0, meta_posit:0, meta_pedidos:0
+            nome: v.nome, meta_fat:0, meta_peso:0, meta_posit:0
           });
         }
       });
@@ -8308,7 +8500,7 @@ function abrirGerenciarVendedores() {
       window._vendedoresSupabase.forEach(v => {
         if(!S.hist[key].metas[ent].vendedores.find(ev=>ev.nome===v.nome)) {
           S.hist[key].metas[ent].vendedores.push({
-            nome:v.nome, meta_fat:0, meta_peso:0, meta_posit:0, meta_pedidos:0
+            nome:v.nome, meta_fat:0, meta_peso:0, meta_posit:0
           });
         }
       });
@@ -8369,13 +8561,12 @@ async function loadGerenteRevisoes() {
       fat: a.fat + (Number(v.meta_faturamento)||0),
       vol: a.vol + (Number(v.meta_volume)||0),
       pos: a.pos + (Number(v.meta_positivacao)||0),
-      ped: a.ped + (Number(v.meta_pedido)||0)
-    }), {fat:0, vol:0, pos:0, ped:0});
+
+    }), {fat:0, vol:0, pos:0});
 
     const pctFat = m.meta_faturamento > 0 ? (tot.fat / m.meta_faturamento * 100) : 0;
     const pctVol = m.meta_volume > 0 ? (tot.vol / m.meta_volume * 100) : 0;
     const pctPos = m.meta_positivacao > 0 ? (tot.pos / m.meta_positivacao * 100) : 0;
-    const pctPed = m.meta_pedido > 0 ? (tot.ped / m.meta_pedido * 100) : 0;
 
     const colorOk = (p) => (p >= 99 && p <= 101) ? '#15803d' : (p > 101 ? '#b45309' : '#dc2626');
     const labelOk = (p) => (p >= 99 && p <= 101) ? '✓ Bate' : (p > 101 ? '⚠ Excede' : '⚠ Falta');
@@ -8409,7 +8600,7 @@ async function loadGerenteRevisoes() {
         <td style="padding:8px 10px;text-align:right">${fmt(v.meta_volume)}</td>
         <td style="padding:8px 10px;text-align:right;color:#065f46;font-weight:600">${fmt(v.meta_positivacao)}</td>
         <td style="padding:8px 10px;text-align:right;color:#64748b;font-size:11px">${fmt(pctP,1)}%</td>
-        <td style="padding:8px 10px;text-align:right">${fmt(v.meta_pedido)}</td>
+        
       </tr>`;
     }).join('');
 
@@ -8426,7 +8617,7 @@ async function loadGerenteRevisoes() {
           <div><div style="font-size:10px;color:#64748b;margin-bottom:3px">Faturamento</div><div style="font-size:16px;font-weight:700;color:#0047AB">${fmtR(m.meta_faturamento)}</div></div>
           <div><div style="font-size:10px;color:#64748b;margin-bottom:3px">Volume (Kg)</div><div style="font-size:16px;font-weight:700">${fmt(m.meta_volume)}</div></div>
           <div><div style="font-size:10px;color:#64748b;margin-bottom:3px">Positivação</div><div style="font-size:16px;font-weight:700">${fmt(m.meta_positivacao)}</div></div>
-          <div><div style="font-size:10px;color:#64748b;margin-bottom:3px">Pedidos</div><div style="font-size:16px;font-weight:700">${fmt(m.meta_pedido)}</div></div>
+          <div>
         </div>
 
         ${vmetas.length ? `
@@ -8444,7 +8635,7 @@ async function loadGerenteRevisoes() {
                 <th style="padding:9px 10px;text-align:right;font-size:10px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0">Volume</th>
                 <th style="padding:9px 10px;text-align:right;font-size:10px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0">Positivação</th>
                 <th style="padding:9px 10px;text-align:right;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0">% Macro</th>
-                <th style="padding:9px 10px;text-align:right;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0">Pedidos</th>
+                
               </tr>
             </thead>
             <tbody>${vendRows}</tbody>
@@ -8531,7 +8722,6 @@ async function preencherMetasDoGerente(metaId, periodo) {
     S.hist[key].metas[ent] = {
       vendedores: S.hist[key].metas[ent].vendedores || [],
       metaFat:  m.meta_faturamento || 0,
-      metaPed:  m.meta_pedido      || 0,
       metaPos:  m.meta_positivacao || 0,
       metaKg:   m.meta_volume      || 0,
       _metaId:  m.id,
@@ -8540,7 +8730,7 @@ async function preencherMetasDoGerente(metaId, periodo) {
     totalFat += (m.meta_faturamento||0);
     totalVol += (m.meta_volume||0);
     totalPos += (m.meta_positivacao||0);
-    totalPed += (m.meta_pedido||0);
+
   });
 
   // Set GERAL as sum of all entrepostos
@@ -8560,7 +8750,7 @@ async function preencherMetasDoGerente(metaId, periodo) {
       window._vendedoresSupabase.forEach(v => {
         if(!S.hist[key].metas[ent].vendedores.find(ev=>ev.nome===v.nome)) {
           S.hist[key].metas[ent].vendedores.push({
-            nome:v.nome, meta_fat:0, meta_peso:0, meta_posit:0, meta_pedidos:0
+            nome:v.nome, meta_fat:0, meta_peso:0, meta_posit:0
           });
         }
       });
@@ -8625,7 +8815,6 @@ async function salvarEEnviarGerente() {
     const fat = Number(v.meta_fat) || 0;
     const pos = Number(v.meta_posit) || 0;
     const peso = Number(v.meta_peso) || 0;
-    const ped = Number(v.meta_pedidos) || 0;
     if(fat === 0 && pos === 0 && peso === 0 && ped === 0) continue;
 
     // Try to find matching cadastrated vendor
@@ -8651,7 +8840,7 @@ async function salvarEEnviarGerente() {
       meta_faturamento: fat,
       meta_volume: peso,
       meta_positivacao: pos,
-      meta_pedido: ped,
+
       atualizado_em: new Date().toISOString()
     };
 
@@ -8717,7 +8906,7 @@ function _injectVendedoresIntoCurrentPeriod() {
       window._vendedoresSupabase.forEach(v => {
         if(!S.hist[key].metas[ent].vendedores.find(ev=>ev.nome===v.nome)) {
           S.hist[key].metas[ent].vendedores.push({
-            nome:v.nome, meta_fat:0, meta_peso:0, meta_posit:0, meta_pedidos:0
+            nome:v.nome, meta_fat:0, meta_peso:0, meta_posit:0
           });
         }
       });
@@ -8740,7 +8929,7 @@ const REAL_COL_MAP = {
   meta_fat: ['meta faturamento','meta_fat','meta fat'],
   posit:    ['positivação','positivacao','posit'],
   meta_pos: ['meta-positivação','meta positivação','meta_pos'],
-  sku:      ['sku','pedidos','qtd pedidos'],
+  sku:      ['sku','qtd'],
   pct:      ['%-projet','%_projet','pct','percentual'],
 };
 
@@ -9089,7 +9278,7 @@ function confirmarMesRealizado() {
 
   // Criar o mês no histórico se não existir
   if(!S.hist[key]) {
-    S.hist[key] = { metas:{}, realizado:{}, metaGeral:{fat:0,posit:0,peso:0,pedidos:0}, importadoEm: new Date().toISOString() };
+    S.hist[key] = { metas:{}, realizado:{}, metaGeral:{fat:0,posit:0,peso:0}, importadoEm: new Date().toISOString() };
     save();
   }
 
@@ -9459,8 +9648,9 @@ async function globalRefresh() {
             'admin-users':    async () => { await loadAllUsers(); renderUsersTable(); },
             'gerente-metas':  loadGerenteMetas,
             'gerente-revisoes': loadGerenteRevisoes,
+            'admin-dashboard': loadAdminDashboard,
+            'admin-export': loadAdminExport,
             'gerente-dashboard': loadGerenteDashboard,
-            'gerente-export': loadGerenteExport,
           };
           if(pageReloads[pid]) await pageReloads[pid]();
         }
@@ -9884,7 +10074,6 @@ window.gAprovar = async function(mid, cid) {
             meta_faturamento : Number(mv.meta_faturamento) || 0,
             meta_volume      : Number(mv.meta_volume)      || 0,
             meta_positivacao : Number(mv.meta_positivacao) || 0,
-            meta_pedido      : Number(mv.meta_pedido)      || 0,
             vendedor_nome    : mv.vendedor_nome || '',
             meta_coord_id    : mid,
             vendedor_id      : mv.vendedor_id || mv.id_do_vendedor,
@@ -9904,7 +10093,7 @@ window.gAprovar = async function(mid, cid) {
             meta_faturamento : 0,
             meta_volume      : 0,
             meta_positivacao : 0,
-            meta_pedido      : 0,
+,
             vendedor_nome    : v.nome,
             meta_coord_id    : mid,
             vendedor_id      : v.id,
