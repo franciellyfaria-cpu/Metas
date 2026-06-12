@@ -4331,11 +4331,12 @@ async function renderDashboard() {
       (p.realizado[e] || []).forEach(v => { if(v.nome) nomesComRealizado.add(v.nome); });
     });
     (p.realizado['GERAL'] || []).forEach(v => { if(v.nome) nomesComRealizado.add(v.nome); });
-    // ✅ Vendedores do banco com META (mesmo sem realizado): aparecem com fat=0, Faixa 1
-    _dadosVendDB.forEach(d => { if(d.nome) nomesComRealizado.add(d.nome); });
 
-    // ✅ também incluir vendedores com meta distribuída localmente
+    // Vendedores com meta: banco (metas_vendedores) + local (S.hist)
     const nomesComMeta = new Set();
+    // Do banco: qualquer linha em _dadosVendDB representa uma meta definida
+    _dadosVendDB.forEach(d => { if(d.nome) nomesComMeta.add(d.nome); });
+    // Local: meta distribuída em S.hist
     ENT.forEach(e => {
       ((p.metas && p.metas[e] && p.metas[e].vendedores) || []).forEach(v => {
         if(v && v.nome && (v.meta_fat > 0 || v.meta_posit > 0 || v.meta_peso > 0)) {
@@ -4344,9 +4345,11 @@ async function renderDashboard() {
       });
     });
 
+    // Regra: vendedor aparece SOMENTE se tiver meta definida (banco ou local)
+    // Realizado sem meta → não aparece no dashboard
     vendedores = cadastrados
       .map(v => v.nome)
-      .filter(nome => nomesComRealizado.has(nome) || nomesComMeta.has(nome))
+      .filter(nome => nomesComMeta.has(nome))
       .sort((a,b) => nomeExibir(a).localeCompare(nomeExibir(b),'pt-BR',{sensitivity:'base'}));
 
     // Garantir que vendedores do banco com meta mas sem cadastro local também apareçam
@@ -4358,8 +4361,8 @@ async function renderDashboard() {
       if(!vendedores.includes(nome)) vendedores.push(nome);
     });
 
-    // Se há meta geral definida mas nenhum vendedor apareceu → mostrar todos os cadastrados
-    // (meta distribuída ainda não; aparecem em Faixa 1 aguardando distribuição)
+    // Se há meta geral definida mas nenhum vendedor tem meta individual ainda →
+    // mostrar todos os cadastrados (meta recebida, distribuição pendente)
     if(vendedores.length === 0 && (p.metaGeral?.fat > 0 || p.metaGeral?.posit > 0 || p.metaGeral?.peso > 0)) {
       vendedores = cadastrados
         .map(v => v.nome)
